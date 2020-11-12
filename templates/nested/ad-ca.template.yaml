@@ -1,0 +1,984 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: |
+  This template creates a Microsoft Enterprise Certificate Authority chain consisting of a Root CA and a Subordinate CA.
+
+Parameters:
+  BackupPolicy:
+    AllowedValues:
+      - "standard"
+      - "dev"
+      - "none"
+    Default: "standard"
+    Description: Select a valid backup policy to employ.
+    Type: String
+  CAAdministratorPassword:
+    AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
+    Description:
+      Password for the CA administrator. User name is Administrator. Must be at least 8 characters
+      containing letters, numbers and symbols
+    MaxLength: "32"
+    MinLength: "8"
+    NoEcho: "true"
+    Type: String
+  CRLS3BucketName:
+    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
+    ConstraintDescription: CRL bucket name can include numbers, lowercase
+      letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
+      (-).
+    Default: crl-bucket
+    Description:
+      S3 bucket name for storing Certificate Revocation Lists (CRLs) and Certificates. CRL bucket name
+      can include numbers, lowercase letters, uppercase letters, and hyphens (-).
+      It cannot start or end with a hyphen (-).
+    Type: String
+  DomainAdminSecret:
+    Description: Arn for the Domain Admin secret
+    Type: String
+  DomainDNSName:
+    AllowedPattern: '[a-zA-Z0-9\-]+\..+'
+    Default: example.com
+    Description:
+      Fully qualified domain name (FQDN) of the forest root domain e.g.
+      example.com
+    MaxLength: "255"
+    MinLength: "2"
+    Type: String
+  DomainNetBIOSName:
+    AllowedPattern: '[a-zA-Z0-9\-]+'
+    Default: example
+    Description:
+      NetBIOS name of the domain (up to 15 characters) for users of earlier
+      versions of Windows e.g. EXAMPLE
+    MaxLength: "15"
+    MinLength: "1"
+    Type: String
+  DomainControllersSGID:
+    Description: ID of the domain controllers security group (e.g., sg-0343606e)
+    Type: AWS::EC2::SecurityGroup::Id
+  DomainMembersSGID:
+    Description: ID of the domain members security group (e.g., sg-0343606e)
+    Type: AWS::EC2::SecurityGroup::Id
+  KeyPairName:
+    Description:
+      Public/private key pairs allow you to securely connect to your instance
+      after it launches
+    Type: AWS::EC2::KeyPair::KeyName
+  KMSKeyId:
+    Type: String
+    Description: KMS Key Id for use with encryption where appropriate
+  LogsS3BucketName:
+    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
+    ConstraintDescription: Logs bucket name can include numbers, lowercase
+      letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
+      (-).
+    Default: gpo-bucket
+    Description: S3 bucket name for storing logs. Logs bucket name
+      can include numbers, lowercase letters, uppercase letters, and hyphens (-).
+      It cannot start or end with a hyphen (-).
+    Type: String
+  PatchWindow:
+    AllowedValues:
+      - "prod"
+      - "test"
+      - "manual"
+    Default: "prod"
+    Description: Select a valid patch window schema.
+    Type: String
+  PrivateSubnet1ID:
+    Description: ID of the private subnet 1 in Availability Zone 1 (e.g., subnet-a0246dcd)
+    Type: String
+    Default: ""
+  RootCANetBIOSName:
+    Default: "RootCA"
+    Description: "NetBIOS name of the root CA (up to 15 characters)"
+    Type: "String"
+  RootCAInstanceType:
+    AllowedValues:
+      - t2.large
+      - t3.large
+      - m4.large
+      - m4.xlarge
+      - m4.2xlarge
+      - m4.4xlarge
+      - m5.large
+      - m5.xlarge
+      - m5.2xlarge
+      - m5.4xlarge
+    Default: m4.xlarge
+    Description: Amazon EC2 instance type for the root CA instance
+    Type: String
+  RootCAPrivateIP:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
+    Default: 10.0.0.10
+    Description: Fixed private IP for the root CA located in Availability Zone 1
+    Type: String
+  S3VPCEndpointId:
+    Type: String
+    Description: S3 VPC endpoint ID to allow access for certificates and CRLs
+  QSS3BucketName:
+    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
+    ConstraintDescription:
+      Quick Start bucket name can include numbers, lowercase
+      letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
+      (-).
+    Default: aws-quickstart
+    Description:
+      S3 bucket name for the Quick Start assets. Quick Start bucket name
+      can include numbers, lowercase letters, uppercase letters, and hyphens (-).
+      It cannot start or end with a hyphen (-).
+    Type: String
+  QSS3BucketRegion:
+    Default: us-east-1
+    Description: The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value.
+    Type: String
+  QSS3KeyPrefix:
+    AllowedPattern: ^[0-9a-zA-Z-/]*$
+    ConstraintDescription:
+      Quick Start key prefix can include numbers, lowercase letters,
+      uppercase letters, hyphens (-), and forward slash (/).
+    Default: quickstart-microsoft-activedirectory/
+    Description:
+      S3 key prefix for the Quick Start assets. Quick Start key prefix
+      can include numbers, lowercase letters, uppercase letters, hyphens (-), and
+      forward slash (/).
+    Type: String
+  SubordinateCANetBIOSName:
+    Default: "SubordinateCA"
+    Description: "NetBIOS name of the subordinate CA (up to 15 characters)"
+    Type: "String"
+  SubordinateCAInstanceType:
+    AllowedValues:
+      - t2.large
+      - t3.large
+      - m4.large
+      - m4.xlarge
+      - m4.2xlarge
+      - m4.4xlarge
+      - m5.large
+      - m5.xlarge
+      - m5.2xlarge
+      - m5.4xlarge
+    Default: m4.xlarge
+    Description: Amazon EC2 instance type for the subordinate CA instance
+    Type: String
+  SubordinateCAPrivateIP:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
+    Default: 10.0.0.10
+    Description: Fixed private IP for the subordinate CA located in
+      Availability Zone 1
+    Type: String
+  VPCID:
+    Description: ID of the VPC (e.g., vpc-0343606e)
+    Type: String
+    Default: ""
+  WS2019FULLBASE:
+    Type: AWS::EC2::Image::Id
+Conditions:
+  UsingDefaultBucket: !Equals [!Ref QSS3BucketName, "aws-quickstart"]
+Resources:
+  # CloudWatch log group for logging events from the SSM automation
+  CAAutomationLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/cwe/ActiveDirectory/CAConfiguration-SSMAutomation/${AWS::StackName}"
+      RetentionInDays: 30
+
+  # Secret for the local CA Administrator user
+  # This is used for both the Root CA and Subordinate CA
+  CAAdminSecrets:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub "CAAdministratorSecret-${AWS::StackName}"
+      Description: Administrator Password for the root CA
+      KmsKeyId: !Ref "KMSKeyId"
+      SecretString: !Sub '{"username":"Administrator","password":"${CAAdministratorPassword}"}'
+
+  # S3 bucket where Certificate Revocation Lists (CRL) are stored
+  # Also used to store and transfer certificate files between the Root CA
+  # and Subordinate CA during setup
+  CRLS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      AccessControl: Private
+      BucketName: !Ref CRLS3BucketName
+      LoggingConfiguration:
+        DestinationBucketName: !Ref LogsS3BucketName
+        LogFilePrefix: !Sub "s3-${CRLS3BucketName}"
+
+  # Bucket policy for the CRL S3 bucket
+  # Allows anything using the S3 VPC Endpoint to read/write objects
+  CRLS3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref CRLS3Bucket
+      PolicyDocument:
+        Statement:
+          - Action:
+              - "s3:GetObject"
+              - "s3:PutObject"
+            Effect: Allow
+            Principal: "*"
+            Condition:
+              StringEquals:
+                "aws:SourceVpce": !Ref S3VPCEndpointId
+            Resource: !Sub "arn:${AWS::Partition}:s3:::${CRLS3Bucket}/*"
+
+  # SSM automation document that completes the entire
+  # configuration for both CA instances
+  CAAutomationDoc:
+    Type: "AWS::SSM::Document"
+    Properties:
+      DocumentType: Automation
+      Content:
+        schemaVersion: "0.3"
+        description: "Deploy root CA with SSM automation"
+        assumeRole: "{{AutomationAssumeRole}}"
+        parameters:
+          CRLS3BucketName:
+            description: "S3 bucket name for the CRLs. The bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+            type: "String"
+          CRLS3BucketUrl:
+            description: 'S3 bucket URL for where the CRLs will be stored (with no trailing "/")'
+            type: "String"
+          QSS3BucketName:
+            default: "aws-quickstart"
+            description: "S3 bucket name for the Quick Start assets. Quick Start bucket name can include numbers, lowercase letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen (-)."
+            type: "String"
+          QSS3BucketRegion:
+            default: "us-east-1"
+            description: "The AWS Region where the Quick Start S3 bucket (QSS3BucketName) is hosted. When using your own bucket, you must specify this value."
+            type: "String"
+          QSS3KeyPrefix:
+            default: "quickstart-microsoft-activedirectory/"
+            description: "S3 key prefix for the Quick Start assets. Quick Start key prefix can include numbers, lowercase letters, uppercase letters, hyphens (-), and forward slash (/)."
+            type: "String"
+          RootCANetBIOSName:
+            default: "RootCA"
+            description: "NetBIOS name of the root CA instance (up to 15 characters)"
+            type: "String"
+          SubordinateCANetBIOSName:
+            default: "RootCA"
+            description: "NetBIOS name of the subordinate CA instance (up to 15 characters)"
+            type: "String"
+          DomainDNSName:
+            default: "example.com"
+            description: "Fully qualified domain name (FQDN) of the forest root domain e.g. example.com"
+            type: "String"
+          DomainNetBIOSName:
+            default: "example"
+            description: "NetBIOS name of the domain (up to 15 characters) for users of earlier versions of Windows e.g. EXAMPLE"
+            type: "String"
+          CAAdminSecParamName:
+            description: "AWS Secrets Manager ARN that has Password and User namer for the CA local administrator."
+            type: "String"
+          ADAdminSecParamName:
+            description: "AWS Secrets Manager ARN that has Password and User namer for the domain administrator."
+            type: "String"
+          StackName:
+            default: ""
+            description: "Stack Name Input for cfn resource signal"
+            type: "String"
+          URLSuffix:
+            default: "amazonaws.com"
+            description: "AWS URL suffix"
+            type: "String"
+          AutomationAssumeRole:
+            default: ""
+            description: "(Optional) The ARN of the role that allows Automation to perform the actions on your behalf."
+            type: "String"
+        mainSteps:
+          # This step grabs the Instance IDs for both instances that will be configured as CAs
+          - name: "casInstanceIds"
+            action: aws:executeAwsApi
+            onFailure: "step:signalfailure"
+            nextStep: "rootCAInstanceId"
+            inputs:
+              Service: ec2
+              Api: DescribeInstances
+              Filters:
+                - Name: "tag:Name"
+                  Values:
+                    ["{{RootCANetBIOSName}}", "{{SubordinateCANetBIOSName}}"]
+                - Name: "tag:aws:cloudformation:stack-name"
+                  Values: ["{{StackName}}"]
+                - Name: "instance-state-name"
+                  Values: ["running"]
+            outputs:
+              - Name: InstanceIds
+                Selector: "$.Reservations..Instances..InstanceId"
+                Type: "StringList"
+          # This step grabs the Instance ID for the node that will be configured as the Root CA
+          - name: "rootCAInstanceId"
+            action: aws:executeAwsApi
+            onFailure: "step:signalfailure"
+            nextStep: "subCAInstanceId"
+            inputs:
+              Service: ec2
+              Api: DescribeInstances
+              Filters:
+                - Name: "tag:Name"
+                  Values: ["{{RootCANetBIOSName}}"]
+                - Name: "tag:aws:cloudformation:stack-name"
+                  Values: ["{{StackName}}"]
+                - Name: "instance-state-name"
+                  Values: ["running"]
+            outputs:
+              - Name: InstanceId
+                Selector: "$.Reservations[0].Instances[0].InstanceId"
+                Type: "String"
+          # This step grabs the Instance ID for the node that will be configured as the Subordinate CA
+          - name: "subCAInstanceId"
+            action: aws:executeAwsApi
+            onFailure: "step:signalfailure"
+            nextStep: "installDscModulesRootCA"
+            inputs:
+              Service: ec2
+              Api: DescribeInstances
+              Filters:
+                - Name: "tag:Name"
+                  Values: ["{{SubordinateCANetBIOSName}}"]
+                - Name: "tag:aws:cloudformation:stack-name"
+                  Values: ["{{StackName}}"]
+                - Name: "instance-state-name"
+                  Values: ["running"]
+            outputs:
+              - Name: InstanceId
+                Selector: "$.Reservations[0].Instances[0].InstanceId"
+                Type: "String"
+          # Installs needed Powershell DSC Modules and certificates on the Root CA
+          - name: "installDscModulesRootCA"
+            action: "aws:runCommand"
+            onFailure: "step:signalfailure"
+            nextStep: "installDscModulesSubCA"
+            inputs:
+              DocumentName: "AWS-RunRemoteScript"
+              InstanceIds:
+                - "{{rootCAInstanceId.InstanceId}}"
+              CloudWatchOutputConfig:
+                CloudWatchOutputEnabled: "true"
+                CloudWatchLogGroupName: !Ref CAAutomationLogs
+              Parameters:
+                sourceType: "S3"
+                sourceInfo: !Sub
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/certificate-authority/Install-CA-Modules.ps1"}'
+                  - S3Bucket: !If
+                      - UsingDefaultBucket
+                      - !Sub "${QSS3BucketName}-${AWS::Region}"
+                      - !Ref QSS3BucketName
+                    S3Region: !If
+                      - UsingDefaultBucket
+                      - !Ref AWS::Region
+                      - !Ref QSS3BucketRegion
+                commandLine: "./Install-CA-Modules.ps1 -HostName {{RootCANetBIOSName}} -CRLS3BucketName {{CRLS3BucketName}} -Region {{global:REGION}}"
+          # Installs needed Powershell DSC Modules and certificates on the Subordinate CA
+          - name: "installDscModulesSubCA"
+            action: "aws:runCommand"
+            onFailure: "step:signalfailure"
+            nextStep: "downloadCertRootCA"
+            inputs:
+              DocumentName: "AWS-RunRemoteScript"
+              InstanceIds:
+                - "{{subCAInstanceId.InstanceId}}"
+              CloudWatchOutputConfig:
+                CloudWatchOutputEnabled: "true"
+                CloudWatchLogGroupName: !Ref CAAutomationLogs
+              Parameters:
+                sourceType: "S3"
+                sourceInfo: !Sub
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/certificate-authority/Install-CA-Modules.ps1"}'
+                  - S3Bucket: !If
+                      - UsingDefaultBucket
+                      - !Sub "${QSS3BucketName}-${AWS::Region}"
+                      - !Ref QSS3BucketName
+                    S3Region: !If
+                      - UsingDefaultBucket
+                      - !Ref AWS::Region
+                      - !Ref QSS3BucketRegion
+                commandLine: "./Install-CA-Modules.ps1 -HostName {{SubordinateCANetBIOSName}} -CRLS3BucketName {{CRLS3BucketName}} -Region {{global:REGION}}"
+          # Download and import the encryption certificate for the Subordinate CA
+          - name: "downloadCertRootCA"
+            action: "aws:runCommand"
+            onFailure: "step:signalfailure"
+            nextStep: "downloadCertSubCA"
+            inputs:
+              DocumentName: "AWS-RunPowerShellScript"
+              InstanceIds:
+                - "{{rootCAInstanceId.InstanceId}}"
+              CloudWatchOutputConfig:
+                CloudWatchOutputEnabled: "true"
+                CloudWatchLogGroupName: !Ref CAAutomationLogs
+              Parameters:
+                commands:
+                  - |
+                    Read-S3Object -BucketName {{CRLS3BucketName}} -Key "\publickeys\{{SubordinateCANetBIOSName}}-DscPublicKey.cer" -File "C:\CWE\publickeys\{{SubordinateCANetBIOSName}}-DscPublicKey.cer" -Endpoint 'https://s3-fips.{{global:REGION}}.amazonaws.com' -Region {{global:REGION}}
+                    Import-Certificate -FilePath "C:\CWE\publickeys\{{SubordinateCANetBIOSName}}-DscPublicKey.cer" -CertStoreLocation Cert:\LocalMachine\My
+          # Download and import the encryption certificate for the Root CA
+          - name: "downloadCertSubCA"
+            action: "aws:runCommand"
+            onFailure: "step:signalfailure"
+            nextStep: "runLCMConfigRootCA"
+            inputs:
+              DocumentName: "AWS-RunPowerShellScript"
+              InstanceIds:
+                - "{{subCAInstanceId.InstanceId}}"
+              CloudWatchOutputConfig:
+                CloudWatchOutputEnabled: "true"
+                CloudWatchLogGroupName: !Ref CAAutomationLogs
+              Parameters:
+                commands:
+                  - |
+                    Read-S3Object -BucketName {{CRLS3BucketName}} -Key "\publickeys\{{RootCANetBIOSName}}-DscPublicKey.cer" -File "C:\CWE\publickeys\{{RootCANetBIOSName}}-DscPublicKey.cer" -Endpoint 'https://s3-fips.{{global:REGION}}.amazonaws.com' -Region {{global:REGION}}
+                    Import-Certificate -FilePath "C:\CWE\publickeys\{{RootCANetBIOSName}}-DscPublicKey.cer" -CertStoreLocation Cert:\LocalMachine\My
+          # Configures Local Configuration Manager on the Root CA
+          - name: "runLCMConfigRootCA"
+            action: "aws:runCommand"
+            onFailure: "step:signalfailure"
+            nextStep: "runLCMConfigSubCA"
+            inputs:
+              DocumentName: "AWS-RunRemoteScript"
+              InstanceIds:
+                - "{{rootCAInstanceId.InstanceId}}"
+              CloudWatchOutputConfig:
+                CloudWatchOutputEnabled: "true"
+                CloudWatchLogGroupName: !Ref CAAutomationLogs
+              Parameters:
+                sourceType: "S3"
+                sourceInfo: !Sub
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/certificate-authority/CA-LCM-Config.ps1"}'
+                  - S3Bucket: !If
+                      - UsingDefaultBucket
+                      - !Sub "${QSS3BucketName}-${AWS::Region}"
+                      - !Ref QSS3BucketName
+                    S3Region: !If
+                      - UsingDefaultBucket
+                      - !Ref AWS::Region
+                      - !Ref QSS3BucketRegion
+                commandLine: "./CA-LCM-Config.ps1 -HostName {{RootCANetBIOSName}}"
+          # Configures Local Configuration Manager on the Subordinate CA
+          - name: "runLCMConfigSubCA"
+            action: "aws:runCommand"
+            onFailure: "step:signalfailure"
+            nextStep: "createRootCAMof"
+            inputs:
+              DocumentName: "AWS-RunRemoteScript"
+              InstanceIds:
+                - "{{subCAInstanceId.InstanceId}}"
+              CloudWatchOutputConfig:
+                CloudWatchOutputEnabled: "true"
+                CloudWatchLogGroupName: !Ref CAAutomationLogs
+              Parameters:
+                sourceType: "S3"
+                sourceInfo: !Sub
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/certificate-authority/CA-LCM-Config.ps1"}'
+                  - S3Bucket: !If
+                      - UsingDefaultBucket
+                      - !Sub "${QSS3BucketName}-${AWS::Region}"
+                      - !Ref QSS3BucketName
+                    S3Region: !If
+                      - UsingDefaultBucket
+                      - !Ref AWS::Region
+                      - !Ref QSS3BucketRegion
+                commandLine: "./CA-LCM-Config.ps1 -HostName {{SubordinateCANetBIOSName}}"
+          # Generates MOF file on Root CA for renaming the host name and joining AD
+          - name: "createRootCAMof"
+            action: "aws:runCommand"
+            onFailure: "step:signalfailure"
+            nextStep: "createSubCAMof"
+            inputs:
+              DocumentName: "AWS-RunRemoteScript"
+              InstanceIds:
+                - "{{rootCAInstanceId.InstanceId}}"
+              CloudWatchOutputConfig:
+                CloudWatchOutputEnabled: "true"
+                CloudWatchLogGroupName: !Ref CAAutomationLogs
+              Parameters:
+                sourceType: "S3"
+                sourceInfo: !Sub
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/certificate-authority/CA-Join-Domain.ps1"}'
+                  - S3Bucket: !If
+                      - UsingDefaultBucket
+                      - !Sub "${QSS3BucketName}-${AWS::Region}"
+                      - !Ref QSS3BucketName
+                    S3Region: !If
+                      - UsingDefaultBucket
+                      - !Ref AWS::Region
+                      - !Ref QSS3BucketRegion
+                commandLine: "./CA-Join-Domain.ps1 -HostName {{RootCANetBIOSName}} -DomainDNSName {{DomainDNSName}} -LocalAdminSSMParam {{CAAdminSecParamName}} -DomainAdminSSMParam {{ADAdminSecParamName}} -Region {{global:REGION}}"
+          # Generates MOF file on Subordinate CA for renaming the host name and joining AD
+          - name: "createSubCAMof"
+            action: "aws:runCommand"
+            onFailure: "step:signalfailure"
+            nextStep: "setHostNames"
+            inputs:
+              DocumentName: "AWS-RunRemoteScript"
+              InstanceIds:
+                - "{{subCAInstanceId.InstanceId}}"
+              CloudWatchOutputConfig:
+                CloudWatchOutputEnabled: "true"
+                CloudWatchLogGroupName: !Ref CAAutomationLogs
+              Parameters:
+                sourceType: "S3"
+                sourceInfo: !Sub
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/certificate-authority/CA-Join-Domain.ps1"}'
+                  - S3Bucket: !If
+                      - UsingDefaultBucket
+                      - !Sub "${QSS3BucketName}-${AWS::Region}"
+                      - !Ref QSS3BucketName
+                    S3Region: !If
+                      - UsingDefaultBucket
+                      - !Ref AWS::Region
+                      - !Ref QSS3BucketRegion
+                commandLine: "./CA-Join-Domain.ps1 -HostName {{SubordinateCANetBIOSName}} -DomainDNSName {{DomainDNSName}} -LocalAdminSSMParam {{CAAdminSecParamName}} -DomainAdminSSMParam {{ADAdminSecParamName}} -Region {{global:REGION}}"
+          # Kicks off DSC Configuration and loops\reboots until Node matches Configuration defined in MOF file.
+          - name: "setHostNames"
+            action: aws:runCommand
+            onFailure: "step:signalfailure"
+            nextStep: "createCAConfigMofs"
+            inputs:
+              DocumentName: AWS-RunPowerShellScript
+              InstanceIds:
+                - "{{casInstanceIds.InstanceIds}}"
+              CloudWatchOutputConfig:
+                CloudWatchOutputEnabled: "true"
+                CloudWatchLogGroupName: !Ref CAAutomationLogs
+              Parameters:
+                commands:
+                  - |
+                    function DscStatusCheck () {
+                        $LCMState = (Get-DscLocalConfigurationManager).LCMState
+                        if ($LCMState -eq 'PendingConfiguration' -Or $LCMState -eq 'PendingReboot') {
+                            'returning 3010, should continue after reboot'
+                            exit 3010
+                        } else {
+                            'Completed'
+                        }
+                    }
+
+                    Start-DscConfiguration 'C:\CWE\CAJoinDomain' -Wait -Verbose -Force
+
+                    DscStatusCheck
+          # Generates MOF file on both CAs to be processed by LCM to configure the CAs.
+          - name: "createCAConfigMofs"
+            action: "aws:runCommand"
+            onFailure: "step:signalfailure"
+            nextStep: "configCAs"
+            inputs:
+              DocumentName: "AWS-RunRemoteScript"
+              InstanceIds:
+                - "{{casInstanceIds.InstanceIds}}"
+              CloudWatchOutputConfig:
+                CloudWatchOutputEnabled: "true"
+                CloudWatchLogGroupName: !Ref CAAutomationLogs
+              Parameters:
+                sourceType: "S3"
+                sourceInfo: !Sub
+                  - '{"path": "https://${S3Bucket}.s3.${S3Region}.{{URLSuffix}}/{{QSS3KeyPrefix}}scripts/certificate-authority/ConfigCAs-SSM.ps1"}'
+                  - S3Bucket: !If
+                      - UsingDefaultBucket
+                      - !Sub "${QSS3BucketName}-${AWS::Region}"
+                      - !Ref QSS3BucketName
+                    S3Region: !If
+                      - UsingDefaultBucket
+                      - !Ref AWS::Region
+                      - !Ref QSS3BucketRegion
+                commandLine: "./ConfigCAs-SSM.ps1 -CRLS3BucketName {{CRLS3BucketName}} -CRLS3BucketUrl {{CRLS3BucketUrl}} -RootCANetBIOSName {{RootCANetBIOSName}} -SubordinateCANetBIOSName {{SubordinateCANetBIOSName}} -CAAdminSecret {{CAAdminSecParamName}} -DomainAdminSecret {{ADAdminSecParamName}} -DomainDNSName {{DomainDNSName}} -DomainNetBIOSName {{DomainNetBIOSName}} -Region {{global:REGION}}"
+          # Kicks off DSC Configuration and loops\reboots until Node matches Configuration defined in MOF file.
+          # This is only done on the Subordinate CA
+          # You must pass the Domain Admin credentials when starting the DSC configuration or the configuration will fail.
+          - name: "configCAs"
+            action: aws:runCommand
+            onFailure: "step:signalfailure"
+            inputs:
+              DocumentName: AWS-RunPowerShellScript
+              InstanceIds:
+                - "{{subCAInstanceId.InstanceId}}"
+              CloudWatchOutputConfig:
+                CloudWatchOutputEnabled: "true"
+                CloudWatchLogGroupName: !Ref CAAutomationLogs
+              Parameters:
+                commands:
+                  - |
+                    function DscStatusCheck () {
+                        $LCMState = (Get-DscLocalConfigurationManager).LCMState
+                        if ($LCMState -eq 'PendingConfiguration' -Or $LCMState -eq 'PendingReboot') {
+                            'returning 3010, should continue after reboot'
+                            exit 3010
+                        } else {
+                            'Completed'
+                        }
+                    }
+
+                    $EndpointUrl = "https://secretsmanager-fips.{{global:REGION}}.amazonaws.com"
+                    $ADAdminPassword = ConvertFrom-Json -InputObject (Get-SECSecretValue -EndpointUrl $EndpointUrl -SecretId {{ADAdminSecParamName}}).SecretString
+                    $DomainAdmin = 'Domain\User' -replace 'Domain', '{{DomainNetBIOSName}}' -replace 'User', $ADAdminPassword.UserName
+                    $DomainAdminCredentials = (New-Object PSCredential($DomainAdmin, (ConvertTo-SecureString $ADAdminPassword.Password -AsPlainText -Force)))
+
+                    Start-DscConfiguration 'C:\CWE\ConfigCAs' -Credential $DomainAdminCredentials -Wait -Verbose -Force
+
+                    DscStatusCheck
+          # Determines if CFN Needs to be Signaled or if Work flow should just end
+          - name: "cfnSignalEnd"
+            action: aws:branch
+            inputs:
+              Choices:
+                - NextStep: signalsuccess
+                  Not:
+                    Variable: "{{StackName}}"
+                    StringEquals: ""
+                - NextStep: sleepend
+                  Variable: "{{StackName}}"
+                  StringEquals: ""
+          # If all steps complete successfully signals CFN of Success
+          - name: "signalsuccess"
+            action: "aws:executeAwsApi"
+            isEnd: True
+            inputs:
+              Service: cloudformation
+              Api: SignalResource
+              LogicalResourceId: "SubordinateCA"
+              StackName: "{{StackName}}"
+              Status: SUCCESS
+              UniqueId: "{{subCAInstanceId.InstanceId}}"
+          # If CFN Signl Not Needed this sleep ends work flow
+          - name: "sleepend"
+            action: "aws:sleep"
+            isEnd: True
+            inputs:
+              Duration: PT1S
+          # If any steps fails signals CFN of Failure
+          - name: "signalfailure"
+            action: "aws:executeAwsApi"
+            inputs:
+              Service: cloudformation
+              Api: SignalResource
+              LogicalResourceId: "SubordinateCA"
+              StackName: "{{StackName}}"
+              Status: FAILURE
+              UniqueId: "{{subCAInstanceId.InstanceId}}"
+
+  # IAM role with the appropriate permissions for the
+  # SSM automation document
+  CAAutomationDocRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Policies:
+        - PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:ListBucket
+                  - s3:GetEncryptionConfiguration
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:s3:::${CRLS3Bucket}"
+                  - !Sub "arn:${AWS::Partition}:s3:::${CRLS3Bucket}/*"
+                Effect: Allow
+              - Action:
+                  - kms:Decrypt
+                Resource: !Sub "arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${KMSKeyId}"
+                Effect: Allow
+          PolicyName: AD-CA-CRL-S3-ReadWrite
+        - PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Action:
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:s3:::${QSS3BucketName}"
+                  - !Sub "arn:${AWS::Partition}:s3:::${QSS3BucketName}/*"
+                Effect: Allow
+          PolicyName: AD-S3-SourceFiles-Read
+        - PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Action:
+                  - s3:GetObject
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:s3:::aws-ssm-${AWS::Region}/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::aws-windows-downloads-${AWS::Region}/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::amazon-ssm-${AWS::Region}/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::amazon-ssm-packages-${AWS::Region}/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::${AWS::Region}-birdwatcher-prod/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::patch-baseline-snapshot-${AWS::Region}/*"
+                Effect: Allow
+          PolicyName: ssm-custom-s3-policy
+        - PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudformation:SignalResource
+                Resource: !Sub "arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*"
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeInstances
+                  - ec2:DescribeInstanceStatus
+                  - ssm:*
+                Resource: "*" # according to docs, you must use * with ec2:DescribeInstances and ec2:DescribeInstanceStatus
+          PolicyName: AD-SSM-Automation
+      Path: /
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+                - ssm.amazonaws.com
+            Effect: Allow
+        Version: "2012-10-17"
+
+  # IAM policy that allows the CA instances to pass a role
+  # to the SSM automation document
+  CASsmPassRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: AD-SSM-PassRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - iam:PassRole
+            Resource: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${CAAutomationDocRole}"
+      Roles:
+        - !Ref "CAAutomationDocRole"
+
+  # IAM role with the appropriate permissions for the
+  # CA instances
+  CAServerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Policies:
+        - PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:ListBucket
+                  - s3:GetEncryptionConfiguration
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:s3:::${CRLS3Bucket}"
+                  - !Sub "arn:${AWS::Partition}:s3:::${CRLS3Bucket}/*"
+                Effect: Allow
+              - Action:
+                  - kms:Decrypt
+                  - kms:GenerateDatakey
+                Resource: !Sub "arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${KMSKeyId}"
+                Effect: Allow
+          PolicyName: AD-CA-CRL-S3-ReadWrite
+        - PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Action:
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:s3:::${QSS3BucketName}"
+                  - !Sub "arn:${AWS::Partition}:s3:::${QSS3BucketName}/*"
+                Effect: Allow
+          PolicyName: aws-quick-start-s3-policy
+        - PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Action:
+                  - s3:GetObject
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:s3:::aws-ssm-${AWS::Region}/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::aws-windows-downloads-${AWS::Region}/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::amazon-ssm-${AWS::Region}/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::amazon-ssm-packages-${AWS::Region}/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::${AWS::Region}-birdwatcher-prod/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::patch-baseline-snapshot-${AWS::Region}/*"
+                Effect: Allow
+          PolicyName: ssm-custom-s3-policy
+        - PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                  - secretsmanager:DescribeSecret
+                Resource:
+                  - !Ref "CAAdminSecrets"
+                  - !Ref "DomainAdminSecret"
+              - Effect: Allow
+                Action:
+                  - ssm:StartAutomationExecution
+                Resource: !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:automation-definition/*"
+              - Effect: Allow
+                Action:
+                  - kms:Decrypt
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${KMSKeyId}"
+          PolicyName: CA-SSM-Automation
+        - PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - iam:PassRole
+                Resource: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${CAAutomationDocRole}"
+          PolicyName: AD-SSM-PassRole
+      Path: /
+      ManagedPolicyArns:
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy"
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Effect: Allow
+        Version: "2012-10-17"
+
+  # Server profile that assigns the IAM role to the EC2
+  # instances for the CA servers
+  CAServerProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref "CAServerRole"
+      Path: /
+
+  # EC2 instance for the Root CA
+  RootCA:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref "WS2019FULLBASE"
+      IamInstanceProfile: !Ref "CAServerProfile"
+      InstanceType: !Ref "RootCAInstanceType"
+      SubnetId: !Ref "PrivateSubnet1ID"
+      Tags:
+        - Key: Name
+          Value: !Ref "RootCANetBIOSName"
+        - Key: BackupPolicy
+          Value: !Ref "BackupPolicy"
+        - Key: PatchWindow
+          Value: !Ref "PatchWindow"
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            Encrypted: true
+            KmsKeyId: !Ref "KMSKeyId"
+            VolumeSize: 100
+            VolumeType: gp2
+      SecurityGroupIds:
+        - !Ref "CASecurityGroup"
+        - !Ref "DomainMembersSGID"
+      PrivateIpAddress: !Ref "RootCAPrivateIP"
+      KeyName: !Ref "KeyPairName"
+
+  # EC2 instance for the Subordinate CA
+  SubordinateCA:
+    Type: AWS::EC2::Instance
+    DependsOn: RootCA
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT90M
+        Count: 1
+    Properties:
+      ImageId: !Ref "WS2019FULLBASE"
+      IamInstanceProfile: !Ref "CAServerProfile"
+      InstanceType: !Ref "SubordinateCAInstanceType"
+      SubnetId: !Ref "PrivateSubnet1ID"
+      Tags:
+        - Key: Name
+          Value: !Ref "SubordinateCANetBIOSName"
+        - Key: BackupPolicy
+          Value: !Ref "BackupPolicy"
+        - Key: PatchWindow
+          Value: !Ref "PatchWindow"
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            Encrypted: true
+            KmsKeyId: !Ref "KMSKeyId"
+            VolumeSize: 100
+            VolumeType: gp2
+      SecurityGroupIds:
+        - !Ref "CASecurityGroup"
+        - !Ref "DomainMembersSGID"
+      PrivateIpAddress: !Ref "SubordinateCAPrivateIP"
+      KeyName: !Ref "KeyPairName"
+      UserData: !Base64
+        Fn::Join:
+          - ""
+          - - "<powershell>\n"
+            - "Start-SSMAutomationExecution -DocumentName "
+            - !Sub '"${CAAutomationDoc}"'
+            - " -Parameter @{"
+            - '"CRLS3BucketName"='
+            - !Sub '"${CRLS3Bucket}"'
+            - ';"CRLS3BucketUrl"='
+            - !Sub '"https://s3.${AWS::Region}.amazonaws.com/${CRLS3Bucket}"'
+            - ';"QSS3BucketName"='
+            - !If [
+                UsingDefaultBucket,
+                !Sub '"${QSS3BucketName}-${AWS::Region}"',
+                !Sub '"${QSS3BucketName}"',
+              ]
+            - ';"QSS3BucketRegion"='
+            - !If [
+                UsingDefaultBucket,
+                !Sub '"${AWS::Region}"',
+                !Sub '"${QSS3BucketRegion}"',
+              ]
+            - ';"QSS3KeyPrefix"='
+            - !Sub '"${QSS3KeyPrefix}"'
+            - ';"RootCANetBIOSName"='
+            - !Sub '"${RootCANetBIOSName}"'
+            - ';"SubordinateCANetBIOSName"='
+            - !Sub '"${SubordinateCANetBIOSName}"'
+            - ';"DomainDNSName"='
+            - !Sub '"${DomainDNSName}"'
+            - ';"DomainNetBIOSName"='
+            - !Sub '"${DomainNetBIOSName}"'
+            - ';"CAAdminSecParamName"='
+            - !Sub '"${CAAdminSecrets}"'
+            - ';"ADAdminSecParamName"='
+            - !Sub '"${DomainAdminSecret}"'
+            - ';"StackName"='
+            - !Sub '"${AWS::StackName}"'
+            - ';"URLSuffix"='
+            - !Sub '"${AWS::URLSuffix}"'
+            - ';"AutomationAssumeRole"='
+            - !Sub '"arn:${AWS::Partition}:iam::${AWS::AccountId}:role/${CAAutomationDocRole}"'
+            - "}"
+            - "\n"
+            - "</powershell>\n"
+
+  # Security group used for both of the CA instances
+  CASecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: CAs Security Group
+      VpcId:
+        Ref: VPCID
+      SecurityGroupIngress:
+        - IpProtocol: "-1"
+          SourceSecurityGroupId: !Ref DomainControllersSGID
+        - IpProtocol: "-1"
+          SourceSecurityGroupId: !Ref DomainMembersSGID
+      SecurityGroupEgress:
+        - IpProtocol: "-1"
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic
+
+Outputs:
+  # The ID of the security group used for the CA instances
+  CASecurityGroupID:
+    Value: !Ref "CASecurityGroup"
+    Description: CA Security Group ID
+
+  # The ARN of the secret for the local CA administrator user
+  CASecretsArn:
+    Value: !Ref "CAAdminSecrets"
