@@ -40,5 +40,4 @@ $cert = New-SelfSignedCertificate -Type DocumentEncryptionCertLegacyCsp -DnsName
 $cert | Export-Certificate -FilePath "C:\CWE\publickeys\$($HostName)-DscPublicKey.cer" -Force
 
 "Uploading the public key to S3"
-Write-S3Object -BucketName $CRLS3BucketName -File "C:\CWE\publickeys\$($HostName)-DscPublicKey.cer" -Key "\publickeys\$($HostName)-DscPublicKey.cer" -Endpoint "https://s3-fips.$($Region).amazonaws.com" -Region $Region
-
+Write-S3Object -BucketName publickeys -File "C:\CWE\publickeys\$($HostName)-DscPublicKey.cer" -Key "$($HostName)-DscPublicKey.cer" -Endpoint "https://$($CRLS3BucketName).s3-fips.$($Region).amazonaws.com" -Region $Region

@@ -411,7 +411,7 @@ Resources:
               Parameters:
                 commands:
                   - |
-                    Read-S3Object -BucketName {{CRLS3BucketName}} -Key "\publickeys\{{SubordinateCANetBIOSName}}-DscPublicKey.cer" -File "C:\CWE\publickeys\{{SubordinateCANetBIOSName}}-DscPublicKey.cer" -Endpoint 'https://s3-fips.{{global:REGION}}.amazonaws.com' -Region {{global:REGION}}
+                    Read-S3Object -BucketName publickeys -Key "{{SubordinateCANetBIOSName}}-DscPublicKey.cer" -File "C:\CWE\publickeys\{{SubordinateCANetBIOSName}}-DscPublicKey.cer" -Endpoint 'https://{{CRLS3BucketName}}.s3-fips.{{global:REGION}}.amazonaws.com' -Region {{global:REGION}}
                     Import-Certificate -FilePath "C:\CWE\publickeys\{{SubordinateCANetBIOSName}}-DscPublicKey.cer" -CertStoreLocation Cert:\LocalMachine\My
           # Download and import the encryption certificate for the Root CA
           - name: "downloadCertSubCA"
@@ -428,7 +428,7 @@ Resources:
               Parameters:
                 commands:
                   - |
-                    Read-S3Object -BucketName {{CRLS3BucketName}} -Key "\publickeys\{{RootCANetBIOSName}}-DscPublicKey.cer" -File "C:\CWE\publickeys\{{RootCANetBIOSName}}-DscPublicKey.cer" -Endpoint 'https://s3-fips.{{global:REGION}}.amazonaws.com' -Region {{global:REGION}}
+                    Read-S3Object -BucketName publickeys -Key "{{RootCANetBIOSName}}-DscPublicKey.cer" -File "C:\CWE\publickeys\{{RootCANetBIOSName}}-DscPublicKey.cer" -Endpoint 'https://{{CRLS3BucketName}}.s3-fips.{{global:REGION}}.amazonaws.com' -Region {{global:REGION}}
                     Import-Certificate -FilePath "C:\CWE\publickeys\{{RootCANetBIOSName}}-DscPublicKey.cer" -CertStoreLocation Cert:\LocalMachine\My
           # Configures Local Configuration Manager on the Root CA
           - name: "runLCMConfigRootCA"

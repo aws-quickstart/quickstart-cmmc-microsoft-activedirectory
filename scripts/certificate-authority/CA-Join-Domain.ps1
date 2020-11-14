@@ -89,5 +89,9 @@ Configuration CAJoinDomain {
     }
 }
 
+# Installing AWS CLI
+Invoke-WebRequest -Uri https://awscli.amazonaws.com/AWSCLIV2.msi -OutFile C:\CWE\AWSCLIV2.msi
+Start-Process C:\CWE\AWSCLIV2.msi -ArgumentList '/quiet' -Wait
+
 # Generating MOF File
 CAJoinDomain -OutputPath 'C:\CWE\CAJoinDomain' -LocalCredentials $LocalCredentials -DomainCredentials $DomainCredentials -ConfigurationData $ConfigurationData

@@ -209,7 +209,7 @@ Configuration ConfigCAs {
                 Restart-Service -Name 'certsvc'
                 
                 # Need to give the certsvc enough time to restart before generating the CRL
-                Start-Sleep -s 15
+                Start-Sleep -s 45
 
                 # The following commands will publish the Certificate Revocation List and create a folder name PKI on the C: drive. 
                 # It will then copy the root CA certificate and CRL to the C:\PKI folder. 
@@ -227,7 +227,7 @@ Configuration ConfigCAs {
                 foreach ($f in $files) {
                     $fileKey = '/Root/' + $f
                     $filePath = 'C:\Pki\' + $f.Name
-                    Write-S3Object -BucketName $($Using:CRLS3BucketName) -File $filePath -Key $fileKey -Endpoint "https://s3-fips.$($Using:Region).amazonaws.com" -Region $($Using:Region)
+                    Write-S3Object -BucketName publickeys -File $filePath -Key $fileKey -Endpoint "https://$($Using:CRLS3BucketName).s3-fips.$($Using:Region).amazonaws.com" -Region $($Using:Region)
                 }
             }
             GetScript  = {
@@ -455,7 +455,7 @@ Configuration ConfigCAs {
         # Download the Root CA CRT file from S3
         Script DownloadRootCACRTFile {
             SetScript  = {
-                Read-S3Object -BucketName $($Using:CRLS3BucketName) -Key "Root/$($Using:Node.RootCAName).$($Using:DomainDNSName)_$($Using:Node.RootCACommonName).crt" -File "C:\Windows\System32\CertSrv\CertEnroll\$($Using:Node.RootCAName).$($Using:DomainDNSName)_$($Using:Node.RootCACommonName).crt" -Endpoint "https://s3-fips.$($Using:Region).amazonaws.com" -Region $($Using:Region)
+                Read-S3Object -BucketName publickeys -Key "Root/$($Using:Node.RootCAName).$($Using:DomainDNSName)_$($Using:Node.RootCACommonName).crt" -File "C:\Windows\System32\CertSrv\CertEnroll\$($Using:Node.RootCAName).$($Using:DomainDNSName)_$($Using:Node.RootCACommonName).crt" -Endpoint "https://$($Using:CRLS3BucketName).s3-fips.$($Using:Region).amazonaws.com" -Region $($Using:Region)
             }
             GetScript  = {
                 Return @{
@@ -475,7 +475,7 @@ Configuration ConfigCAs {
         # Download the Root CA CRL file from S3
         Script DownloadRootCACRLFile {
             SetScript  = {
-                Read-S3Object -BucketName $($Using:CRLS3BucketName) -Key "Root/$($Using:Node.RootCACommonName).crl" -File "C:\Windows\System32\CertSrv\CertEnroll\$($Using:Node.RootCACommonName).crl" -Endpoint "https://s3-fips.$($Using:Region).amazonaws.com" -Region $($Using:Region)
+                Read-S3Object -BucketName publickeys -Key "Root/$($Using:Node.RootCACommonName).crl" -File "C:\Windows\System32\CertSrv\CertEnroll\$($Using:Node.RootCACommonName).crl" -Endpoint "https://$($Using:CRLS3BucketName).s3-fips.$($Using:Region).amazonaws.com" -Region $($Using:Region)
             }
             GetScript  = {
                 Return @{
@@ -655,7 +655,7 @@ Configuration ConfigCAs {
                 foreach ($f in $files) {
                     $fileKey = '/Subordinate/' + $f
                     $filePath = 'C:\Pki\' + $f.Name
-                    Write-S3Object -BucketName $($Using:CRLS3BucketName) -File $filePath -Key $fileKey -Endpoint "https://s3-fips.$($Using:Region).amazonaws.com" -Region $($Using:Region)
+                    Write-S3Object -BucketName publickeys -File $filePath -Key $fileKey -Endpoint "https://$($Using:CRLS3BucketName).s3-fips.$($Using:Region).amazonaws.com" -Region $($Using:Region)
                 }
             }
             GetScript  = {
