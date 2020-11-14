@@ -26,12 +26,6 @@
     - **AD Restore Mode Password**
     - Add a suffix to all bucket names
       - This is because all bucket names must be unique. Currently we do not append anything to the bucket names in the solution
-    - **Source Location S3 URL**
-      - This is the URL to the S3 bucket where you uploaded the source files
-    - **Source Location Bucket ARN**
-      - This is the ARN for the bucket where you uploaded the source files
-    - **Source Location Bucket Name**
-      - This is the name of the bucket where you uploaded the source files
 
 The deployment will take between 60-90 mins to complete. 
 
@@ -48,22 +42,22 @@ The CA stack also runs an SSM automation document once the Subordinate CA instan
 ## Template Descriptions
 
 
-### ```ad-master-1-ssm.template.yaml```
+### ```ad-main-1-ssm.template.yaml```
 
 The main template that takes all parameter entries, creates the KMS customer-managed key (CMK), and launches the relevant nested stacks.
 
 ### ```ad-1-ssm.template.yaml```
 Launches the Active Directory infrastructure and installs and configures the domain controllers. This stack also deploys the resources for the DISA STIG GPO Import Process
 
-### ```submodules/aws-vpc.template.yaml```
+### ```nested/aws-vpc.template.yaml```
 
 If parameters are not entered for an existing VPC, this template will be launched to set up the VPC architecture.
 
-### ```submodules/rdgw-domain.template.yaml```
+### ```nested/rdgw-domain.template.yaml```
 
 Deploys a simple Remote Desktop Gateway architecture that will automatically join the deployed Active Directory infrastructure.
 
-### ```submodules/ad-ca.yaml```
+### ```nested/ad-ca.yaml```
 
 Deploys a [two-tier Microsoft PKI infrastructure](docs/certification-authority.md) consisting of an offline Root CA and an Enterprise Subordinate CA.
 
