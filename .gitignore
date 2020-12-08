@@ -1,1 +1,3 @@
-node_modules
+taskcat_outputs/*
+.taskcat_overrides.yml
+docs/index.html

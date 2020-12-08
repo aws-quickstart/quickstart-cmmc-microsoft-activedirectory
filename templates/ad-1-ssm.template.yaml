@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description:
-  This template creates 2 Windows 2016 Active Directory Domain Controllers
+  This template creates 2 Windows 2019 Active Directory Domain Controllers
   into private subnets in separate Availability Zones inside a VPC. The default Domain
   Administrator password will be the one retrieved from the instance.  For adding
   members to the domain, ensure that they are launched into the domain member security

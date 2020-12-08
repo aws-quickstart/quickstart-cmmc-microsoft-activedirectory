@@ -1,4 +1,4 @@
-# CWE Compliant Active Directory and Certificate Authority
+# CMMC Ready Microsoft Active Directory and Certificate Authority
 
 ## Deployment Guide
 
