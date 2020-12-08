@@ -4,4 +4,11 @@
 
 This guide provides instructions for deploying the {partner-product-short-name} Quick Start reference architecture on the AWS Cloud.
 
-This Quick Start is for users who <target audience and usage scenario>
+This Quick Start is for users who need to deploy a secure Active Directory environment in the AWS Cloud that is ready for compliance with the https://www.acq.osd.mil/cmmc/[Cybersecurity Maturity Model Certification (CMMC)]. CMMC certification is typically required of US Department of Defence (DOD) contractors.
+
+To comply with governance and security requirements, this template utilizes:
+
+* KMS CMK for use with EBS and Secrets Manager encryption
+* AWS API FIPS endpoints
+* Local customer-controlled file download sources
+* Implementation of DISA STIGs

@@ -1,13 +1,11 @@
 // If no preperation is required, remove all content from here
 
-==== Prepare your AWS account
-
-_Describe any setup required in the AWS account prior to template launch_
-
-==== Prepare your {partner-company-name} account
-
-_Describe any setup required in the partner portal/account prior to template launch_
-
 ==== Prepare for the deployment
 
-_Describe any preparation required to complete the product build, such as obtaining licenses or placing files in S3_
+1. Create an S3 bucket to which to upload the solution files.
+2. Upload the following directories and all files within the directories:
+    - Archives
+    - Scripts
+    - Templates
+3. Create a Key Pair to use with the EC2 instances.
+4. If/when changes are made to the index.js file for the GPOPackagesFunction Lambda function, you will need to create a ZIP archive with just that file and name it `GPOPackagesFunction.zip`. You will then need to replace the archive with the same name in the `archives` folder. This will need to be done prior to uploading the file in step 2 above.
