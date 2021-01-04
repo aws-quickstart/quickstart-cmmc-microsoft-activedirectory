@@ -60,12 +60,16 @@ Metadata:
           - DomainAdminUser
           - DomainAdminPassword
           - RestoreModePassword
-          - GPOS3BucketName
-          - LogsS3BucketName
       - Label:
           default: Certificate Authority Configuration
         Parameters:
           - CAAdministratorPassword
+      - Label:
+          default: S3 Bucket Configuration
+        Parameters:
+          - CreateS3Buckets
+          - GPOS3BucketName
+          - LogsS3BucketName
           - CRLS3BucketName
       - Label:
           default: Backup and Patching Configuration
@@ -99,6 +103,8 @@ Metadata:
         defualt: Backup Policy
       CAAdministratorPassword:
         default: CA Administator Password
+      CreateS3Buckets:
+        default: Create new S3 buckets
       CRLS3BucketName:
         default: Bucket Name for the Certificate Revocation Lists (CRLs)
       DomainAdminPassword:
@@ -245,6 +251,13 @@ Parameters:
       - "none"
     Default: "standard"
     Description: Select a valid backup policy to employ.
+    Type: String
+  CreateS3Buckets:
+    AllowedValues:
+      - "yes"
+      - "no"
+    Default: "yes"
+    Description: Create new S3 buckets.
     Type: String
   DomainAdminPassword:
     AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
@@ -497,6 +510,7 @@ Parameters:
     Default: "/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base"
 Conditions:
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, "aws-quickstart"]
+  NewS3Buckets: !Equals [!Ref CreateS3Buckets, "yes"]
   CreateVPC: !Or
     - !Equals [!Ref "PrivateSubnet1ID", ""]
     - !Equals [!Ref "PrivateSubnet2ID", ""]
@@ -571,6 +585,8 @@ Resources:
         ADServer2NetBIOSName: !Ref "ADServer2NetBIOSName"
         ADServer2PrivateIP: !Ref "ADServer2PrivateIP"
         BackupPolicy: !Ref "BackupPolicy"
+        CreateS3Buckets: !Ref "CreateS3Buckets"
+        CRLS3BucketName: !Ref "CRLS3BucketName"
         DomainAdminPassword: !Ref "DomainAdminPassword"
         DomainAdminUser: !Ref "DomainAdminUser"
         DomainDNSName: !Ref "DomainDNSName"

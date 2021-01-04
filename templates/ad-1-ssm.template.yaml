@@ -42,6 +42,13 @@ Metadata:
           - DomainNetBIOSName
           - RestoreModePassword
       - Label:
+          default: S3 Bucket Configuration
+        Parameters:
+          - CreateS3Buckets
+          - GPOS3BucketName
+          - LogsS3BucketName
+          - CRLS3BucketName
+      - Label:
           default: Backup and Patching Configuration
         Parameters:
           - BackupPolicy
@@ -52,6 +59,7 @@ Metadata:
           - QSS3BucketName
           - QSS3KeyPrefix
           - QSS3BucketRegion
+          - CreateS3Buckets
       - Label:
           default: Encryption Configuration
         Parameters:
@@ -73,6 +81,10 @@ Metadata:
         default: Domain Controller 2 Private IP Address
       BackupPolicy:
         defualt: Backup Policy
+      CreateS3Buckets:
+        default: Create new S3 buckets
+      CRLS3BucketName:
+        default: Bucket Name for the Certificate Revocation Lists (CRLs)
       DomainAdminPassword:
         default: Alternate Domain Admin Password
       DomainAdminUser:
@@ -81,10 +93,14 @@ Metadata:
         default: Domain DNS Name
       DomainNetBIOSName:
         default: Domain NetBIOS Name
+      GPOS3BucketName:
+        default: Bucket Name for Uploading Group Policy Object (GPO) Packages
       KeyPairName:
         default: Key Pair Name
       KMSKeyId:
         default: KMS Key Id
+      LogsS3BucketName:
+        default: Bucket Name for Storing Access Log Files
       PatchWindow:
         default: Patch Window
       PrivateSubnet1ID:
@@ -184,6 +200,24 @@ Parameters:
       - "none"
     Default: "standard"
     Description: Select a valid backup policy to employ.
+    Type: String
+  CreateS3Buckets:
+    AllowedValues:
+      - "yes"
+      - "no"
+    Default: "yes"
+    Description: Create new S3 buckets.
+    Type: String
+  CRLS3BucketName:
+    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
+    ConstraintDescription: CRL bucket name can include numbers, lowercase
+      letters, uppercase letters, and hyphens (-). It cannot start or end with a hyphen
+      (-).
+    Default: ad-crl-bucket
+    Description:
+      S3 bucket name for storing Certificate Revocation Lists (CRLs) and Certificates. CRL bucket name
+      can include numbers, lowercase letters, uppercase letters, and hyphens (-).
+      It cannot start or end with a hyphen (-).
     Type: String
   DomainAdminPassword:
     AllowedPattern: (?=^.{6,255}$)((?=.*\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*
@@ -346,6 +380,7 @@ Rules:
         AssertDescription: All subnets must in the VPC
 Conditions:
   UsingDefaultBucket: !Equals [!Ref QSS3BucketName, "aws-quickstart"]
+  NewS3Buckets: !Equals [!Ref CreateS3Buckets, "yes"]
 Resources:
   ADAutomationLogs:
     Type: AWS::Logs::LogGroup
@@ -354,6 +389,7 @@ Resources:
       RetentionInDays: 30
   ADLogsBucket:
     Type: AWS::S3::Bucket
+    Condition: NewS3Buckets
     Properties:
       AccessControl: LogDeliveryWrite
       BucketName: !Ref LogsS3BucketName
@@ -366,6 +402,7 @@ Resources:
         LogFilePrefix: !Sub "s3-${LogsS3BucketName}"
   ADLogsBucketPolicy:
     Type: AWS::S3::BucketPolicy
+    Condition: NewS3Buckets
     Properties:
       Bucket: !Ref ADLogsBucket
       PolicyDocument:
@@ -1315,6 +1352,7 @@ Resources:
   # to trigger the GPO import process
   GPOS3Bucket:
     Type: AWS::S3::Bucket
+    Condition: NewS3Buckets
     DependsOn: GPOQueuePolicy
     Properties:
       AccessControl: Private
@@ -1332,10 +1370,43 @@ Resources:
         DestinationBucketName: !Ref ADLogsBucket
         LogFilePrefix: !Sub "s3-${GPOS3BucketName}"
 
+  # S3 bucket where Certificate Revocation Lists (CRL) are stored
+  # Also used to store and transfer certificate files between the Root CA
+  # and Subordinate CA during setup
+  CRLS3Bucket:
+    Type: AWS::S3::Bucket
+    Condition: NewS3Buckets
+    Properties:
+      AccessControl: Private
+      BucketName: !Ref CRLS3BucketName
+      LoggingConfiguration:
+        DestinationBucketName: !Ref LogsS3BucketName
+        LogFilePrefix: !Sub "s3-${CRLS3BucketName}"
+
+  # Bucket policy for the CRL S3 bucket
+  # Allows anything using the S3 VPC Endpoint to read/write objects
+  CRLS3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Condition: NewS3Buckets
+    Properties:
+      Bucket: !Ref CRLS3Bucket
+      PolicyDocument:
+        Statement:
+          - Action:
+              - "s3:GetObject"
+              - "s3:PutObject"
+            Effect: Allow
+            Principal: "*"
+            Condition:
+              StringEquals:
+                "aws:SourceVpce": !Ref S3VPCEndpointId
+            Resource: !Sub "arn:${AWS::Partition}:s3:::${CRLS3Bucket}/*"
+
   # Bucket policy for the GPOS3Bucket that only allows access to
   # read objects if coming through the S3 VPC Endpoint
   GPOS3BucketPolicy:
     Type: AWS::S3::BucketPolicy
+    Condition: NewS3Buckets
     Properties:
       Bucket: !Ref GPOS3Bucket
       PolicyDocument:

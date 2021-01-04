@@ -24,11 +24,12 @@ tests:
       AdministratorPassword: $[taskcat_genpass_16]
       AvailabilityZones: $[taskcat_genaz_2]
       CAAdministratorPassword: $[taskcat_genpass_16]
-      CRLS3BucketName: $[taskcat_random-string]
+      CreateS3Buckets: "no"
+      CRLS3BucketName: override
       DomainAdminPassword: $[taskcat_genpass_16]
-      GPOS3BucketName: $[taskcat_random-string]
+      GPOS3BucketName: override
       KeyPairName: $[taskcat_getkeypair]
-      LogsS3BucketName: $[taskcat_random-string]
+      LogsS3BucketName: override
       QSS3BucketName: $[taskcat_autobucket]
       QSS3BucketRegion: $[taskcat_current_region]
       RDGWCIDR: 10.0.0.0/16
