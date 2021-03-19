@@ -6,7 +6,7 @@ AWS Cloud.
 :xrefstyle: short
 [#architecture1]
 .Quick Start architecture for {partner-product-short-name} on AWS
-image::../images/architecture_diagram.png[Architecture,width=100%,height=100%]
+image::../images/cmmc-active-directory-architecture-diagram.png[Architecture,width=100%,height=100%]
 
 As shown in <<architecture1>>, the Quick Start sets up the following:
 
@@ -14,16 +14,23 @@ As shown in <<architecture1>>, the Quick Start sets up the following:
 * A VPC configured with public and private subnets, according to AWS
 best practices, to provide you with your own virtual network on AWS.*
 * In the public subnets:
+
 ** Managed network address translation (NAT) gateways to allow outbound
 internet access for resources in the private subnets.*
-** A Remote Desktop Gateway in an Auto Scaling group to allow inbound Remote Desktop Protocol (RDP) access to EC2 instances in public and private subnets.*
+** A Remote Desktop (RD) Gateway in an Auto Scaling group to allow inbound Remote Desktop Protocol (RDP) access to Amazon EC2 instances in public and private subnets. An RD Gateway is deployed in Avalability Zone 2 only if Availability Zone 1 becomes unavailable. *
+
 * In the private subnets:
+
 ** Two Active Directory domain controllers.
-** An offline root Certificate Authority.
-** An online subordinate Certificate Authority.
+** An offline root certificate authority.
+** An online subordinate certificate authority.
 // Add bullet points for any additional components that are included in the deployment. Make sure that the additional components are also represented in the architecture diagram. End each bullet with a period.
-* S3 buckets for Group Policy objects (GPOs), logs, certificate revocation lists (CRLs), and setup files.
-* AWS Lambda functions to check for and import new GPOs.
+
+* Amazon S3 buckets for Group Policy Objects (GPOs), logs, certificate revocation lists (CRLs), and setup files, accessed via Federal Information Processing Standard (FIPS) endpoints.
+* Lambda functions to check for and import new GPOs.
 * AWS Systems Manager automation to import GPOs and set up both the Active Directory domain and the certificate authority.
+* AWS Secrets Manager secrets to store credentials.
+* An AWS Key Management Service (KMS) customer master key (CMK) to use with Amazon Elastic Block Store (Amazon EBS) and AWS Secrets Manager encryption.
+* Encrypted Amazon EBS volumes for the Amazon EC2 instances. 
 
 [.small]#*The template that deploys the Quick Start into an existing VPC skips the components marked by asterisks and prompts you for your existing VPC configuration.#
