@@ -24,6 +24,7 @@ ADServer2PrivateIp
 
  |UDP88, TCP88, TCP445, UDP445, TCP49152-65535, UDP49152-65535, TCP389, UDP389, TCP636
 |RDGWSecurityGroup |RDGW1, RDGW2 |RDGWCIDR* |TCP3389, TCP3391, TCP443
+|CASurityGroup |RootCA, SubordinateCA |VPCID* |All traffic
 |========================================================================================================================================================================================================================================
 
 *Important* *RDP should never be opened up to the entire internet, not even temporarily or for testing purposes.* For more information, see this http://aws.amazon.com/security/security-bulletins/morto-worm-spreading-via-remote-desktop-protocol/[Amazon security bulletin]. Always restrict ports and source traffic to the minimum necessary to support the functionality of the application. For more about securing Remote Desktop Gateway, see the https://d0.awsstatic.com/whitepapers/aws-microsoft-platform-security.pdf[Securing the Microsoft Platform on Amazon Web Services] whitepaper.

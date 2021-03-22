@@ -13,7 +13,7 @@ Description:
   you create a stack from this template. (qs-1raijs4oo)
 Metadata:
   QuickStartDocumentation:
-    EntrypointName: "Launch into a new VPC"
+    EntrypointName: "Launch into a new or existing VPC"
     Order: "1"
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -502,7 +502,7 @@ Parameters:
     Description: CIDR Block for the VPC. Still required if using an existing VPC.
     Type: String
   VPCID:
-    Description: (Conditional) Existing VPC ID within which any specified subnet IDs reside.
+    Description: (Conditional) Existing VPC ID within which any specified subnet IDs reside. Leave blank to create a new VPC.
     Type: String
     Default: ""
   WS2019FULLBASE:
