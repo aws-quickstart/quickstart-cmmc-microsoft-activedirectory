@@ -23,7 +23,7 @@ This Quick Start offers a template that you can use to deploy Active Directory i
 This VPC architecture uses two Availability Zones, each with its own public and private subnets. Be sure to leave plenty of unallocated address space to support the growth of your environment over time and to reduce the complexity of your VPC subnet design. This Quick Start uses a default VPC configuration that provides plenty of address space by using the minimum number of private and public subnets. By default, this Quick Start uses the following Classless Inter-Domain Routing (CIDR) ranges:
 
 [cols="3",options="header",]
-|===
+|====================================
 |VPC |10.0.0.0/16|
 |Private subnets A |*10.0.0.0/17*|
 | |Availability Zone 1 |10.0.0.0/19
@@ -31,7 +31,7 @@ This VPC architecture uses two Availability Zones, each with its own public and 
 |Public subnets |*10.0.128.0/18*|
 | |Availability Zone 1 |10.0.128.0/20
 | |Availability Zone 2 |10.0.144.0/20
-|===
+|====================================
 
 In addition, the Quick Start provides spare capacity for additional subnets to support your environment as it grows or changes over time. If you have sensitive workloads that must be completely isolated from the internet, you can create new VPC subnets using these optional address spaces. For background information and more details on this option, see https://fwd.aws/9VdxNAmazon[Amazon VPC on the AWS Cloud^].
 
