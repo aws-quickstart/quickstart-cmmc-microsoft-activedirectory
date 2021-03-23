@@ -17,19 +17,19 @@ best practices, to provide you with your own virtual network on AWS.*
 
 ** Managed network address translation (NAT) gateways to allow outbound
 internet access for resources in the private subnets.*
-** A Remote Desktop (RD) Gateway in an Auto Scaling group to allow inbound Remote Desktop Protocol (RDP) access to Amazon Elastic Compute Cloud (Amazon EC2) instances in public and private subnets. An RD Gateway is deployed in Avalability Zone 2 only if Availability Zone 1 becomes unavailable.*
+** A Remote Desktop Gateway (RD Gateway) in an Auto Scaling group to allow inbound Remote Desktop Protocol (RDP) access to Amazon Elastic Compute Cloud (Amazon EC2) instances in public and private subnets. An RD Gateway is deployed in Avalability Zone 2 only if Availability Zone 1 becomes unavailable.*
 
 * In the private subnets:
 
-** Two Active Directory domain controllers.
 ** An offline root certificate authority.
+** Two Active Directory domain controllers.
 ** An online subordinate certificate authority.
 // Add bullet points for any additional components that are included in the deployment. Make sure that the additional components are also represented in the architecture diagram. End each bullet with a period.
 
 * Amazon S3 Federal Information Processing Standard (FIPS) endpoints for accessing Group Policy Objects (GPOs), logs, certificate revocation lists (CRLs), and setup files.
 * Lambda functions to check for and import new GPOs.
-* AWS Systems Manager automation to import GPOs and set up both the Active Directory domain and the certificate authority.
-* AWS Secrets Manager secrets to store credentials.
+* AWS Systems Manager automation to import GPOs and set up both the Active Directory domain controllers and the certificate authority.
+* AWS Secrets Manager to store credentials.
 * An AWS Key Management Service (AWS KMS) customer master key (CMK) to use with Amazon Elastic Block Store (Amazon EBS) and AWS Secrets Manager encryption.
 * Encrypted Amazon EBS volumes for the Amazon EC2 instances. 
 
