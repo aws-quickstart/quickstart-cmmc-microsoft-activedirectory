@@ -103,17 +103,17 @@ To make sure that domain-joined Windows instances automatically register host (A
 .Advanced TCP/IP settings on a domain-joined Windows instance
 image::../images/image6.png[Architecture,width=295,height=353]
 
-The default configuration for a network connection is set to automatically register the connections address in DNS. In other words, as shown in the preceeding figure, the *Register this connection’s address in DNS* option is selected for you automatically. This takes care of host (A) record dynamic registration. However, if you do not also select the second option, *Use this connection’s DNS suffix in DNS registration*, dynamic registration of PTR records will not take place.
+The default configuration for a network connection is set to automatically register the connections address in DNS. In other words, as shown in the preceeding figure, the *Register this connection’s address in DNS* option is selected for you automatically. This takes care of host (A) record dynamic registration. However, if you do not also select the second option, *Use this connection’s DNS suffix in DNS registration*, PTR records will not be dynamically registered. 
 
-If you have a small number of instances in the VPC, you may choose to configure the network connection manually. For larger fleets, you can push this setting out to all your Windows instances by using Active Directory Group Policy. For step-by-step instructions, see http://technet.microsoft.com/library/cc754143.aspx[IPv4 and IPv6 Advanced DNS Tab] in the Microsoft TechNet Library.
+If you have a small number of instances in the VPC, you can choose to configure the network connection manually. For larger fleets, you can push this setting out to all your Windows instances by using Active Directory Group Policy. For step-by-step instructions, see http://technet.microsoft.com/library/cc754143.aspx[IPv4 and IPv6 Advanced DNS Tab] in the Microsoft TechNet Library.
 
-=== PowerShell DSC Usage in the Quick Start
+=== PowerShell DSC usage in the Quick Start
 
-In this section, we will provide an overview of Windows Powershell Desired State Configuration (DSC), and we will cover how this Quick Start uses DSC and Systems Manager to configure each domain controller. If you are new to PowerShell DSC, we highly recommend that you consult the additional resources at the end of this guide for a deeper look at the topic.
+This section provide an overview of Windows Powershell Desired State Configuration (DSC), including how this Quick Start uses DSC and AWS Systems Manager to configure each domain controller. 
 
 ==== A Brief Overview of PowerShell DSC
 
-Introduced in Windows Management Framework 4.0, PowerShell DSC provides a configuration management platform native to operating systems later than Windows Server 2012 R2 and Windows 8.1, as well as Linux. Because we are leveraging Windows Server 2019 in this Quick Start, we are using Windows Mangement Framework 5.1 and PowerShell 5.1. Using lightweight commands called cmdlets, DSC allows you to express the desired state of your systems using declarative language syntax instead of configuring servers with complex imperative scripts. If you have worked with configuration management tools like Chef or Puppet, you will notice that DSC provides a familiar framework.
+Introduced in Windows Management Framework 4.0, PowerShell DSC provides a configuration management platform that is native to operating systems later than Windows Server 2012 R2 and Windows 8.1, as well as Linux. Because this Quick Start uses Windows Server 2019, it also uses Windows Mangement Framework 5.1 and PowerShell 5.1. Using lightweight commands called cmdlets, DSC allows you to express the desired state of your systems using declarative language syntax instead of configuring servers with complex imperative scripts. If you have worked with configuration management tools like Chef or Puppet, you will notice that DSC provides a familiar framework.
 
 When using DSC to apply a desired configuration for a system, you create a configuration script with PowerShell that explains what the system should look like. You use that configuration script to generate a Management Object Format (MOF) file, which is then pushed or pulled by a node to apply the desired state. PowerShell DSC uses vendor-neutral MOF files to enable cross-platform management, so the node can be either a Windows or a Linux system.
 
@@ -129,42 +129,42 @@ The following figure shows an example of a basic DSC configuration script that c
 .Basic DSC configuration script
 image::../images/image8.png[Architecture,width=533,height=224]
 
-1.  *Line 1* – We use the Configuration keyword to define a name (MyService) for the configuration.
-2.  *Line 2* – The Node keyword is used to define the desired state for a server named Server1.
-3.  *Lines 3 through 6* – We create an instance of the Service resource called bits. Within the resource, we’re declaring that the service named bits should be in a running state.
-4.  *Line 10* – The configuration is executed, which generates a MOF file called Server1.mof in a folder called *MyService*.
-5.  *Line 11* – The Start-DscConfiguration cmdlet pushes the MOF file in the *MyService* folder to the computer Server1. When doing this interactively, it’s useful to use the -Wait and -Verbose parameters to get detailed information. In each step of the Quick Start, we use the -Wait parameter so that we can orchestrate tasks interactively with AWS services. We use the -Verbose parameter so that execution details gets exported to CloudWatch.
+* Line 1: Keyword to define a name (MyService) for the configuration.
+* Line 2: The Node keyword used to define the desired state for a server named Server1.
+* Lines 3-6: Creates an instance of the Service resource called bits and declares that it should be in a running state.
+* Line 10: The configuration is executed, which generates a MOF file called Server1.mof in a folder called *MyService*.
+* Line 11: The Start-DscConfiguration cmdlet pushes the MOF file in the *MyService* folder to the computer Server1. When doing this interactively, it’s useful to use the -Wait and -Verbose parameters to get detailed information. In each step of the Quick Start, the -Wait parameter is used to orchestrate tasks interactively with AWS services. The -Verbose parameter is used so that execution details get exported to Amazon CloudWatch.
 
 [[dsc-usage-in-the-ad-ds-quick-start]]
 ==== DSC Usage in the Quick Start
 
-As noted previously, PowerShell DSC clients can pull their configurations from a server or their configurations can be pushed to them either locally or from a remote system. In this Quick Start, we use a local push configuration on each node. The following figure shows how we are configuring the LCM.
+As noted previously, PowerShell DSC clients can pull their configurations from a server or their configurations can be pushed to them either locally or from a remote system. This Quick Start uses a local push configuration on each node. The following figure shows how the Local Configuration Manager (LCM) is configured.
 
 [#knowledge5]
 .Using the Get-DscLocalConfigurationManager cmdlet to get the LCM configuration
 image::../images/image9.png[Architecture,width=547,height=370]
 
-The following list describes why we chose certain settings for this Quick Start.
+The following list describes reasons for using certain settings for this Quick Start:
 
-* *RefreshMode* – We use the default value, Push Mode, to send the configuration to the LCM on each node.
-* *ActionAfterReboot* -We set this to StopConfiguration so that we can orchestrate actions between reboots through AWS services such as Systems Manager. The default value is ContinueConfiguration.
-* *RebootNodeIfNeeded* – We use the default value, false, so that we can control reboots through AWS services.
+* *RefreshMode*: The default value, Push Mode, is used to send the configuration to the LCM on each node.
+* *ActionAfterReboot*: The value is set to *StopConfiguration* to orchestrate actions between reboots through AWS services such as Systems Manager. The default value is ContinueConfiguration.
+* *RebootNodeIfNeeded*: The default value, false, is used to control reboots through AWS services.
 +
 These settings, along with the -Wait parameter, allow the Quick Start to use Systems Manager to orchestrate deployment workflows when starting a DSC configuration.
 
-The following figure shows an example script that you can use to change the configuration of the LCM to align with how you may want to leverage PowerShell DSC in your environment.
+The following figure shows an example script that you can use to change the configuration of the LCM to align with how you may want to use PowerShell DSC in your environment.
 
 [#knowledge6]
 .Sample script to configure the LCM
 image::../images/image10.png[Architecture,width=100%,height=100%]
 
-The script is available in this Quick Start’s GitHub repository. Note the use of the DSCLocalConfigurationManager attribute and the Set-DscLocalConfigurationManager cmdlet to specifically configure the LCM. For more information on settings and options, see the https://docs.microsoft.com/en-us/powershell/dsc/metaconfig[Microsoft documentation].
+The script is available in this Quick Start’s GitHub repository. Note the use of the *DSCLocalConfigurationManager* attribute and the *Set-DscLocalConfigurationManager* cmdlet to specifically configure the LCM. For more information on settings and options, see the https://docs.microsoft.com/en-us/powershell/?view=powershell-7.1[PowerShell documentation^].
 
 In the GitHub repository you can also review the ConfigDC1-SSM.ps1 and ConfigDC2-SSM.ps1 scripts, which are used to generate the MOF file for each domain controller node of the Quick Start. The scripts directory in the repository has a subdirectory labeled *certificate-authority* containing the scripts used to configure the root and subordinate CAs. These scripts have been annotated for documentation purposes.
 
 [[systems-manager-usage-in-the-ad-ds-quick-start]]
-==== Systems Manager Usage in the AD DS Quick Start
+==== Systems Manager usage in the AD DS Quick Start
 
-During the deployment of this Quick Start, Systems Manager Automation documents orchestrate the steps in the configuration of each domain controller and of the certificate authorities. AWS CloudFormation deploys all AWS resources in this Quick Start, including the EC2 instances, VPC, and Systems Manager Automation documents. Then the Systems Manager Automation documents are used to configure the EC2 instances as domain controllers or certificate authorities.
+During the deployment of this Quick Start, Systems Manager Automation documents orchestrate the steps in the configuration of each domain controller and of the certificate authorities. AWS CloudFormation deploys all AWS resources in this Quick Start, including the Amazon EC2 instances, VPC, and Systems Manager Automation documents. Then the Systems Manager Automation documents are used to configure the Amazon EC2 instances as domain controllers or certificate authorities.
 
-The Quick Start AWS CloudFormation templates deploy stacks that consist of five EC2 instances with tag values for the Name key derived from the CloudFormation parameters as well as the Systems Manager Automation document. After the second domain controller is deployed, it will start the Automation document through https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/ec2-windows-user-data.html[EC2 user data].
+The Quick Start AWS CloudFormation template deploys stacks that consist of five Amazon EC2 instances with tag values for the Name key derived from the CloudFormation parameters as well as the Systems Manager Automation document. After the second domain controller is deployed, it will start the Automation document through Amazon EC2 user data. See https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/ec2-windows-user-data.html[Run commands on your Windows instance at launch^] for more information. 
