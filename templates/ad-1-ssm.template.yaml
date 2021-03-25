@@ -1742,3 +1742,6 @@ Outputs:
     Description: Domain Member Security Group ID
   SecretsArn:
     Value: !Ref "ADAdminSecrets"
+  Postdeployment:
+    Description: See the deployment guide for post-deployment information. 
+    Value: https://aws-quickstart.github.io/quickstart-cmmc-microsoft-activedirectory/
