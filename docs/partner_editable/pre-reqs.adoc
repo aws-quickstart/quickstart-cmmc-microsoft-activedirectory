@@ -4,7 +4,7 @@
 
 Do the following steps to prepare for the Quick Start deployment:
 
-. Create an Amazon Simple Storage Service (Amazon S3) bucket to store the files.
-. If you make changes to the index.js file for the GPOPackagesFunction Lambda function, you must create a .zip archive file named `GPOPackagesFunction.zip`. Be sure it contains only this one file. Next, replace the archive file with the same name in the `archives` folder. 
+. Create an Amazon S3 bucket to store the files.
+. If you make changes to the index.js file for the GPOPackagesFunction Lambda function, you must create a .zip archive file named *GPOPackagesFunction.zip*. Be sure it contains only this one file. Next, replace the archive file with the same name in the *archives* folder. 
 . Upload the *Archives*, *Scripts*, and *Templates* directories, including all files within those directories.
-. Create a key pair to use with the Amazon Elastic Compute Cloud (Amazon EC2) instances.
+. Create a key pair to use with the Amazon EC2 instances.

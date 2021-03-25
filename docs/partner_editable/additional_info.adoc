@@ -1,15 +1,15 @@
 == Post-deployment steps
 
-1. Once everything is set up, you need to upload the current DISA STIG GPO package to the GPO S3 bucket. For more information on this process, read the [DISA STIG GPO Import Process documentation](docs/gpo-import.md)
-2. This will kick off the process that imports the GPO backups into Active Directory. The manual process only needs to be done once after initial deployment
-3. Going forward, there is a Lambda function that checks the DISA website for a new package on a defined schedule and sends an SNS notification when a package is found or when it has not been found but should have been available.
+After deployment, upload the current DISA STIG GPO package to the GPO S3 bucket. For more information on this process, read the DISA STIG GPO Import Process documentation, located in the docs/gpo-import.md file in the https://fwd.aws/jbg4A[GitHub repository]. Uploading the package starts the process that imports the GPO backups into Active Directory. The manual process only needs to be done once after initial deployment.
+
+Going forward, you can use a Lambda function to check the DISA website for a new package on a defined schedule and send an SNS notification when a package is found or when it has not been found but should have been available.
 
 == Security
 // Provide post-deployment best practices for using the technology on AWS, including considerations such as migrating data, backups, ensuring high performance, high availability, etc. Link to software documentation for detailed information.
 
-AWS provides a set of building blocks, including the Amazon EC2 and Amazon VPC services, that you can use to provision infrastructure for your applications. In this model, some security capabilities such as physical security are the responsibility of AWS and are highlighted in the https://d0.awsstatic.com/whitepapers/aws-security-best-practices.pdf[AWS security whitepaper]. Other capabilities, such as controlling access to applications, are the responsibility of the application developer and the tools provided in the Microsoft platform.
+AWS provides a set of building blocks, including the Amazon EC2 and Amazon VPC services, that you can use to provision infrastructure for your applications. In this model, some security capabilities such as physical security are the responsibility of AWS and are highlighted in the https://d0.awsstatic.com/whitepapers/aws-security-best-practices.pdf[AWS Security Best Practices^] whitepaper. Other capabilities, such as controlling access to applications, are the responsibility of the application developer and the tools provided in the Microsoft platform.
 
-If you have followed the automated deployment options in this guide, the necessary security groups are configured for you by the provided AWS CloudFormation templates and are listed here for your reference.
+If you have followed the automated deployment options in this guide, the necessary security groups are configured for you by the provided AWS CloudFormation template and are listed here for your reference.
 
 [cols=",,,",options="header",]
 |========================================================================================================================================================================================================================================
@@ -27,5 +27,5 @@ ADServer2PrivateIp
 |CASurityGroup |RootCA, SubordinateCA |VPCID* |All traffic
 |========================================================================================================================================================================================================================================
 
-*Important* *RDP should never be opened up to the entire internet, not even temporarily or for testing purposes.* For more information, see this http://aws.amazon.com/security/security-bulletins/morto-worm-spreading-via-remote-desktop-protocol/[Amazon security bulletin]. Always restrict ports and source traffic to the minimum necessary to support the functionality of the application. For more about securing Remote Desktop Gateway, see the https://d0.awsstatic.com/whitepapers/aws-microsoft-platform-security.pdf[Securing the Microsoft Platform on Amazon Web Services] whitepaper.
+NOTE: *Important* RDP should never be opened up to the entire internet, not even temporarily or for testing purposes. For more information, see the http://aws.amazon.com/security/security-bulletins/morto-worm-spreading-via-remote-desktop-protocol/[Morto Worm Spreading via Remote Desktop Protocol^] Amazon security bulletin. Always restrict ports and source traffic to the minimum necessary to support the functionality of the application. For more about securing Remote Desktop Gateway, see the https://d1.awsstatic.com/whitepapers/aws-microsoft-platform-security.pdf[Securing the Microsoft Platform on Amazon Web Services^] whitepaper.
 

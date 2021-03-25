@@ -26,7 +26,7 @@ internet access for resources in the private subnets.*
 ** An online subordinate certificate authority.
 // Add bullet points for any additional components that are included in the deployment. Make sure that the additional components are also represented in the architecture diagram. End each bullet with a period.
 
-* Amazon S3 Federal Information Processing Standard (FIPS) endpoints for accessing Group Policy Objects (GPOs), logs, certificate revocation lists (CRLs), and setup files.
+* Amazon S3 Federal Information Processing Standards (FIPS) endpoints for accessing Group Policy Objects (GPOs), logs, certificate revocation lists (CRLs), and setup files.
 * Lambda functions to check for and import new GPOs.
 * AWS Systems Manager automation to import GPOs and set up both the Active Directory domain controllers and the certificate authority.
 * AWS Secrets Manager to store credentials.
