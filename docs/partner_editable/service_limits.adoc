@@ -8,5 +8,5 @@
 |Security groups |2
 |AWS Identity and Access Management (IAM) roles |2
 |Auto Scaling groups |1
-|General purpose EC2 instances |5
+|General purpose Amazon EC2 instances |5
 |===
