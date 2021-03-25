@@ -49,55 +49,55 @@ For a complete list of ports, see http://technet.microsoft.com/library/dd772723(
 
 ==== Configure secure administrative access using RD Gateway
 
-As you design your architecture for highly available AD DS, you should also design for highly available and secure remote access. The Quick Start templates handle this by deploying RD Gateway in each Availability Zone. In case of an Availability Zone outage, this architecture allows access to the resources that may have failed over to the other Availability Zone.
+As you design your architecture for AD DS, you should also design for highly available and secure remote access. The Quick Start template handles this by deploying RD Gateway in each Availability Zone to allow for failover from one Zone to the other. 
 
-RD Gateway uses the Remote Desktop Protocol (RDP) over HTTPS to establish a secure, encrypted connection between remote administrators on the internet and Windows-based Amazon EC2 instances without the need for a virtual private network (VPN) connection. This configuration helps reduce the attack surface on your Windows-based Amazon EC2 instances while providing a remote administration solution for administrators.
+RD Gateway uses the Remote Desktop Protocol (RDP) over HTTPS to establish a secure, encrypted connection between remote administrators on the internet and Windows-based Amazon EC2 instances without the need for a virtual private network (VPN) connection. This configuration helps reduce the attack surface on your Windows-based Amazon EC2 instances while providing a remote solution for administrators.
 
-The AWS CloudFormation templates provided with this Quick Start automatically deploy the architecture and configuration outlined in the https://fwd.aws/5VrKP[Remote Desktop Gateway Quick Start].
+The AWS CloudFormation template provided with this Quick Start automatically deploys the architecture and configuration outlined in the https://fwd.aws/5VrKP[Remote Desktop Gateway Quick Start].
 
-After you’ve launched your AD infrastructure by following the deployment steps in this guide, you will initially connect to your instances by using a standard RDP TCP port 3389 connection. You can then follow the steps in the https://fwd.aws/5VrKP[Remote Desktop Gateway Quick Start^] to secure future connections via HTTPS.
+After you’ve launched your Active Directory infrastructure by following the deployment steps in this guide, you will initially connect to your instances by using a standard RDP TCP port 3389 connection. You can then follow the steps in the https://fwd.aws/5VrKP[Remote Desktop Gateway Quick Start^] to secure future connections via HTTPS.
 
 ==== Active Directory design
 
 Review the following sections for key design considerations that are specific to the Quick Start. You should become familiar with the Active Directory design considerations that are discussed in the whitepaper https://d1.awsstatic.com/whitepapers/adds-on-aws.pdf[Active Directory Domain Services on AWS^].
 
-===== Site Topology
+===== Site topology
 
-Because AWS Global infrastructure is built around Regions that contain multiple physically separated, isolated Availability Zones that are connected with low latency, high throughput, and highly redundant networking, this Quick Start deploys a single AD site per Region and gives it the Region name.
+AWS Global Cloud Infrastructure is built around Regions that contain multiple physically separated, isolated Availability Zones that are connected with low latency, high throughput, and highly redundant networking. Given this, this Quick Start deploys a single Active Directory site per Region and gives it the Region name.
 
-The following figure shows an example of site and subnet definitions for a typical AD DS architecture running within a VPC. A single Active Directory site has been named after the Region, and subnets have been defined and associated with the AD Region site.
+The following figure shows an example of site and subnet definitions for a typical AD DS architecture running within a VPC. A single Active Directory site has been named after the Region, and subnets have been defined and associated with the Active Directory Region site.
 
 [#knowledge1]
 .Active Directory Sites and Services configuration
 image::../images/image5.png[Architecture,width=648,height=338]
 
-Creating a single Active Directory site for the Region, and associating VPC subnets with that site, provides a simple and effective architecture that helps to maintain a highly available AD DS deployment.
+Creating a single Active Directory site for the Region, and associating VPC subnets with that site, provides a simple and effective architecture that helps maintain a highly available AD DS deployment.
 
 [[highly-available-directory-domain-services]]
-===== Highly Available Directory Domain Services
+===== Highly available directory domain services
 
-Within this Quick Start,  two domain controllers are deployed in your AWS environment in two Availability Zones. This design provides fault tolerance and prevents a single domain controller failure from affecting the availability of the AD DS.
+Within this Quick Start, two domain controllers are deployed in your AWS environment in two Availability Zones. This design provides fault tolerance and prevents a single domain controller failure from affecting the availability of the AD DS.
 
 To further support the high availability of your architecture and help mitigate the impact of a possible disaster, each domain controller in this Quick Start is a global catalog server and an Active Directory DNS server.
 
-The AWS CloudFormation template provided for link:#deployment-steps[scenario 1] will build out an Active Directory Sites and Services configuration for you automatically that will support a highly available AD DS architecture. If you plan to deploy AD DS into an existing VPC, make sure that you properly map subnets to the correct site to help ensure that AD DS traffic uses the best possible path.
+The AWS CloudFormation template automatically builds an Active Directory Sites and Services configuration that supports a highly available AD DS architecture. If you plan to deploy AD DS into an existing VPC, make sure that you properly map subnets to the correct site to help ensure that AD DS traffic uses the best possible path.
 
-For detailed guidance on creating sites, adding global catalog servers, and creating and managing site links, see the http://technet.microsoft.com/library/cc730868.aspx[Microsoft Active Directory Sites and Services] documentation.
+For detailed instructions on creating sites, adding global catalog servers, and creating and managing site links, see http://technet.microsoft.com/library/cc730868.aspx[Microsoft Active Directory Sites and Services^].
 
 ===== Active Directory DNS and DHCP Inside the VPC
 
-With a VPC, Dynamic Host Configuration Protocol (DHCP) services are provided by default for your instances via DHCP option sets. This Quick Start's AWS CloudFormation template configures the DHCP options set with the Active Directory domain controllers as the name servers, as recommended by the http://docs.aws.amazon.com/directoryservice/latest/admin-guide/dhcp_options_set.html[AWS Directory Service documentation]. This means that instances that need to join the domain will automatically be able to join, without requiring any changes.
+With a VPC, Dynamic Host Configuration Protocol (DHCP) services are provided by default for your instances via DHCP options sets. This Quick Start's AWS CloudFormation template configures the DHCP options set with the Active Directory domain controllers as the name servers, as recommended by the http://docs.aws.amazon.com/directoryservice/latest/admin-guide/dhcp_options_set.html[AWS Directory Service documentation^]. This means that instances that need to join the domain are automatically able to join, without requiring any changes.
 
-The VPC also provides an internal DNS server, which provides instances with basic name resolution services for access to AWS service endpoints such as AWS CloudFormation and Amazon Simple Storage Service (Amazon S3) during the bootstrapping process when you launch the Quick Start.
+The VPC also provides an internal DNS server, which provides instances with basic name resolution services for access to AWS service endpoints such as AWS CloudFormation and Amazon S3 during the bootstrapping process when you launch the Quick Start.
 
-*Note* The IP addresses in the domain-name-servers field are always returned in the same order. If the first DNS server in the list fails, instances should fall back to the second IP and continue to resolve host names successfully. However, during normal operations, the first DNS server listed will always handle DNS requests. If you want to ensure that DNS queries are distributed evenly across multiple servers, you should consider statically configuring DNS server settings on your instances.
+*Note* The IP addresses in the *domain-name-servers* field are always returned in the same order. If the first DNS server in the list fails, instances should fall back to the second IP address and continue to resolve host names successfully. However, during normal operations, the first DNS server listed will always handle DNS requests. If you want to ensure that DNS queries are distributed evenly across multiple servers, you should consider statically configuring DNS server settings on your instances.
 
-For details on creating or modifying a custom DHCP options set associated with your VPC, see http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_DHCP_Options.html#DHCPOptionSet[Working with DHCP Options Sets] in the _Amazon VPC User Guide_.
+For details on creating or modifying a custom DHCP options set associated with your VPC, see http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_DHCP_Options.html#DHCPOptionSet[Working with DHCP options sets^] in the _Amazon VPC User Guide_.
 
 [[dns-settings-on-windows-server-instances]]
-===== DNS Settings on Windows Server Instances
+===== DNS settings on Windows Server instances
 
-To make sure that domain-joined Windows instances will automatically register host (A) and reverse lookup (PTR) records with Active Directory-integrated DNS, set the properties of the network connection as shown in the following figure.
+To make sure that domain-joined Windows instances automatically register host (A) and reverse lookup (PTR) records with Active Directory-integrated DNS, set the properties of the network connection as shown in the following figure.
 
 [#knowledge2]
 .Advanced TCP/IP settings on a domain-joined Windows instance

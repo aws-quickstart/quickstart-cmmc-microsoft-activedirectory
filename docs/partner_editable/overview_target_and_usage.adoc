@@ -11,6 +11,6 @@ NOTE: {compliance-statement}
 To comply with governance and security requirements, the Quick Start template uses:
 
 * An AWS Key Management Service (AWS KMS) customer master key (CMK) to use with Amazon Elastic Block Store (Amazon EBS) and AWS Secrets Manager encryption.
-* Amazon API Gateway Federal Information Processing Standard (FIPS) endpoints.
+* Amazon API Gateway Federal Information Processing Standards (FIPS) endpoints.
 * Local customer-controlled file download sources.
 * Implementation of Defense Information Systems Agency (DISA) Security Technical Implementation Guides (STIGS).
