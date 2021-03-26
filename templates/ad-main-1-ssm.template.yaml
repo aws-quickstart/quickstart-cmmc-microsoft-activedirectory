@@ -100,7 +100,7 @@ Metadata:
       AvailabilityZones:
         default: Availability Zones
       BackupPolicy:
-        defualt: Backup policy
+        default: Backup policy
       CAAdministratorPassword:
         default: Certificate Authority (CA) administator password
       CreateS3Buckets:
@@ -124,7 +124,7 @@ Metadata:
       RestoreModePassword:
         default: Active Directory restore mode password
       PatchWindow:
-        default: PatchwWindow
+        default: Patch window
       PrivateSubnet1CIDR:
         default: Private subnet 1 CIDR
       PrivateSubnet1ID:
@@ -136,11 +136,11 @@ Metadata:
       PublicSubnet1CIDR:
         default: Public subnet 1 CIDR
       PublicSubnet1ID:
-        defualt: Public subnet 1 ID
+        default: Public subnet 1 ID
       PublicSubnet2CIDR:
         default: Public subnet 2 CIDR
       PublicSubnet2ID:
-        defualt: Public subnet 2 ID
+        default: Public subnet 2 ID
       RootCANetBIOSName:
         default: Root CA NetBIOS name
       RootCAInstanceType:
@@ -516,6 +516,7 @@ Parameters:
     Type: String
     Default: ""
   WS2019FULLBASE:
+    Description: AWS Systems Manager parameter value to grab the latest Amazon Machine Image (AMI) ID (WS2019FULLBASE)
     Type: "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>"
     Default: "/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base"
 Conditions:
