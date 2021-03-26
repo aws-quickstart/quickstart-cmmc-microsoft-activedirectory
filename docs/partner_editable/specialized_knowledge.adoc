@@ -136,7 +136,7 @@ image::../images/image8.png[Architecture,width=533,height=224]
 * Line 11: The Start-DscConfiguration cmdlet pushes the MOF file in the *MyService* folder to the computer Server1. When doing this interactively, it’s useful to use the -Wait and -Verbose parameters to get detailed information. In each step of the Quick Start, the -Wait parameter is used to orchestrate tasks interactively with AWS services. The -Verbose parameter is used so that execution details get exported to Amazon CloudWatch.
 
 [[dsc-usage-in-the-ad-ds-quick-start]]
-==== DSC Usage in the Quick Start
+==== PowerShell DSC usage in the Quick Start
 
 As noted previously, PowerShell DSC clients can pull their configurations from a server or their configurations can be pushed to them either locally or from a remote system. This Quick Start uses a local push configuration on each node. The following figure shows how the Local Configuration Manager (LCM) is configured.
 
@@ -149,7 +149,7 @@ The following list describes reasons for using certain settings for this Quick S
 * *RefreshMode*: The default value, Push Mode, is used to send the configuration to the LCM on each node.
 * *ActionAfterReboot*: The value is set to *StopConfiguration* to orchestrate actions between reboots through AWS services such as Systems Manager. The default value is ContinueConfiguration.
 * *RebootNodeIfNeeded*: The default value, false, is used to control reboots through AWS services.
-+
+
 These settings, along with the -Wait parameter, allow the Quick Start to use Systems Manager to orchestrate deployment workflows when starting a DSC configuration.
 
 The following figure shows an example script that you can use to change the configuration of the LCM to align with how you may want to use PowerShell DSC in your environment.
@@ -163,8 +163,8 @@ The script is available in this Quick Start’s GitHub repository. Note the use 
 In the GitHub repository you can also review the ConfigDC1-SSM.ps1 and ConfigDC2-SSM.ps1 scripts, which are used to generate the MOF file for each domain controller node of the Quick Start. The scripts directory in the repository has a subdirectory labeled *certificate-authority* containing the scripts used to configure the root and subordinate CAs. These scripts have been annotated for documentation purposes.
 
 [[systems-manager-usage-in-the-ad-ds-quick-start]]
-==== Systems Manager usage in the AD DS Quick Start
+==== AWS Systems Manager usage in the Quick Start
 
-During the deployment of this Quick Start, Systems Manager Automation documents orchestrate the steps in the configuration of each domain controller and of the certificate authorities. AWS CloudFormation deploys all AWS resources in this Quick Start, including the Amazon EC2 instances, VPC, and Systems Manager Automation documents. Then the Systems Manager Automation documents are used to configure the Amazon EC2 instances as domain controllers or certificate authorities.
+During the deployment of this Quick Start, AWS Systems Manager (SSM) Automation documents orchestrate the steps in the configuration of each domain controller and of the certificate authorities. AWS CloudFormation deploys all AWS resources in this Quick Start, including the Amazon EC2 instances, VPC, and Systems Manager Automation documents. Then the Systems Manager Automation documents are used to configure the Amazon EC2 instances as domain controllers or certificate authorities.
 
 The Quick Start AWS CloudFormation template deploys stacks that consist of five Amazon EC2 instances with tag values for the Name key derived from the CloudFormation parameters as well as the Systems Manager Automation document. After the second domain controller is deployed, it will start the Automation document through Amazon EC2 user data. See https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/ec2-windows-user-data.html[Run commands on your Windows instance at launch^] for more information. 

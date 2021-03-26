@@ -2,7 +2,7 @@
 
 After deployment, upload the current DISA STIG GPO package to the GPO S3 bucket. For more information on this process, read the DISA STIG GPO Import Process documentation, located in the docs/gpo-import.md file in the https://fwd.aws/jbg4A[GitHub repository]. Uploading the package starts the process that imports the GPO backups into Active Directory. The manual process only needs to be done once after initial deployment.
 
-Going forward, you can use a Lambda function to check the DISA website for a new package on a defined schedule and send an SNS notification when a package is found or when it has not been found but should have been available.
+From then on, you can use a Lambda function to check the DISA website for a new package on a defined schedule and send an SNS notification when a package is found or when it has not been found but should have been available.
 
 == Security
 // Provide post-deployment best practices for using the technology on AWS, including considerations such as migrating data, backups, ensuring high performance, high availability, etc. Link to software documentation for detailed information.
