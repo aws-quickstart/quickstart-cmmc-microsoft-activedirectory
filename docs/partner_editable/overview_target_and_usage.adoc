@@ -4,7 +4,7 @@
 
 This guide provides instructions for deploying the {partner-product-short-name} Quick Start reference architecture on the AWS Cloud.
 
-This Quick Start is for users who need to deploy an {partner-product-short-name} environment that is ready for compliance with the https://www.acq.osd.mil/cmmc/[Cybersecurity Maturity Model Certification (CMMC)]. CMMC certification is typically required of US Department of Defense (DOD) contractors.
+This Quick Start is for users who want to deploy an {partner-product-short-name} environment that is ready for compliance with the https://www.acq.osd.mil/cmmc/[Cybersecurity Maturity Model Certification (CMMC)]. CMMC certification is typically required of US Department of Defense (DOD) contractors.
 
 NOTE: {compliance-statement}
 
