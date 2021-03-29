@@ -17,7 +17,7 @@ best practices, to provide you with your own virtual network on AWS.*
 
 ** Managed network address translation (NAT) gateways to allow outbound
 internet access for resources in the private subnets.*
-** A Remote Desktop Gateway (RD Gateway) in an Auto Scaling group to allow inbound Remote Desktop Protocol (RDP) access to Amazon Elastic Compute Cloud (Amazon EC2) instances in public and private subnets. An RD Gateway is deployed in Avalability Zone 2 only if Availability Zone 1 becomes unavailable.*
+** A Remote Desktop Gateway (RD Gateway) in an Auto Scaling group to allow inbound Remote Desktop Protocol (RDP) access to Amazon Elastic Compute Cloud (Amazon EC2) instances in public and private subnets. An RD Gateway is deployed in Availability Zone 2 only if Availability Zone 1 becomes unavailable.*
 
 * In the private subnets:
 
