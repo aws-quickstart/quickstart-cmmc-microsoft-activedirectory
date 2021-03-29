@@ -61,7 +61,7 @@ Metadata:
           - DomainAdminPassword
           - RestoreModePassword
       - Label:
-          default: Certificate Authority configuration
+          default: Certificate authority configuration
         Parameters:
           - CAAdministratorPassword
       - Label:
@@ -102,11 +102,11 @@ Metadata:
       BackupPolicy:
         default: Backup policy
       CAAdministratorPassword:
-        default: Certificate Authority (CA) administator password
+        default: Certificate authority (CA) administator password
       CreateS3Buckets:
         default: Create new S3 buckets
       CRLS3BucketName:
-        default: Bucket name for the Certificate Revocation Lists (CRLs)
+        default: Bucket name for the certificate revocation lists (CRLs)
       DomainAdminPassword:
         default: Alternate domain administrator password
       DomainAdminUser:
