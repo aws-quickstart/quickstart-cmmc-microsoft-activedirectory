@@ -386,6 +386,7 @@ Resources:
       RetentionInDays: 30
   ADLogsBucket:
     Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
     Condition: NewS3Buckets
     Properties:
       AccessControl: LogDeliveryWrite
@@ -1349,6 +1350,7 @@ Resources:
   # to trigger the GPO import process
   GPOS3Bucket:
     Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
     Condition: NewS3Buckets
     DependsOn: GPOQueuePolicy
     Properties:
@@ -1372,6 +1374,7 @@ Resources:
   # and Subordinate CA during setup
   CRLS3Bucket:
     Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
     Condition: NewS3Buckets
     Properties:
       AccessControl: Private
