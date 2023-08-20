@@ -1,3 +1,0 @@
-This Quick Start is supported in all Regions that support AWS Systems Manager and S3 FIPS endpoints. See the https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services/[AWS Regional Services page] to verify that your required Region is supported.
-
-//Full list: https://docs.aws.amazon.com/general/latest/gr/rande.html

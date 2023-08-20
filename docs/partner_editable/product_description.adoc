@@ -1,9 +1,0 @@
-// Replace the content in <>
-// Briefly describe the software. Use consistent and clear branding. 
-// Include the benefits of using the software on AWS, and provide details on usage scenarios.
-
-AWS provides a comprehensive set of services and tools for deploying Microsoft Windows-based workloads on its cloud infrastructure. Microsoft Active Directory Domain Services (AD DS), Domain Name System (DNS), and certificate authority (CA) are core Windows services that provide the foundation for many enterprise-level Microsoft-based solutions, including Microsoft SharePoint, Microsoft Exchange, and .NET applications. This Quick Start assumes that you’re already familiar with these services.
-
-This Quick Start is for organizations running workloads in the AWS Cloud that require secure, low-latency connectivity to AD DS, DNS, and CA services, while maintaining CMMC compliance.
-
-This guide focuses on infrastructure configuration topics that require careful consideration when you are planning and deploying AD DS, domain controller instances, DNS services, and CA services in the AWS Cloud. It doesn't cover general Windows Server installation and software configuration tasks. For general software configuration guidance and best practices, see the Microsoft product documentation.
