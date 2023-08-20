@@ -1,0 +1,5 @@
+// Edit this placeholder text as necessary to describe the deployment options.
+
+This Partner Solution provides the following deployment option:
+
+* https://fwd.aws/vNGq5[Deploy {partner-product-short-name} into a new VPC^]. This option provides the ability to build a new AWS environment that comprising a VPC, subnets, NAT gateways, security groups, bastion hosts, and other infrastructure components, and then deploy {partner-product-short-name} into this new VPC, or to deploy {partner-product-short-name} into an existing VPC.
