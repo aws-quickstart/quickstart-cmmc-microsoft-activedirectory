@@ -1,3 +1,10 @@
 //Include any predeployment steps here, such as signing up for a Marketplace AMI or making any changes to a partner account. If there are no predeployment steps, leave this file empty.
 
 == Predeployment steps
+
+Do the following steps to prepare for the Partner Solution deployment:
+
+. Create an Amazon S3 bucket to store the files. 
+. If you change the index.js file for the *GPOPackagesFunction* Lambda function, you must create a .zip archive file named *GPOPackagesFunction.zip*. Be sure it contains only this one file. Next, replace the archive file with the same name in the *Archives* folder. 
+. Upload the *Archives*, *Scripts*, and *Templates* directories, including all files within those directories.
+. Create a key pair to use with the Amazon EC2 instances.
