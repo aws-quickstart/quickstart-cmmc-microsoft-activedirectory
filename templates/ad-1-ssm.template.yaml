@@ -1482,7 +1482,7 @@ Resources:
       Description: "Runs an SSM document to install/update the DISA STIG GPOs in Active Directory"
       Handler: index.handler
       Role: !GetAtt GPOSendImportCommandExecutionRole.Arn
-      Runtime: nodejs12.x
+      Runtime: nodejs18.x
       Environment:
         Variables:
           INSTANCE_ID: !Ref DomainController1
@@ -1696,7 +1696,7 @@ Resources:
       Description: "Checks the DISA website for new DISA STIG GPO packages and sends notifications"
       Handler: index.handler
       Role: !GetAtt GPOCheckForNewPackagesExecutionRole.Arn
-      Runtime: nodejs12.x
+      Runtime: nodejs18.x
       KmsKeyArn: !Sub arn:${AWS::Partition}:kms:${AWS::Region}:${AWS::AccountId}:key/${KMSKeyId}
       Environment:
         Variables:
